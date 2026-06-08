@@ -56,9 +56,21 @@ struct LoginView: View {
                                 .buttonStyle(.plain)
                             }
 
-                            PCPrimaryButton("Masuk", icon: "arrow.right") {
+                            // Error message
+                            if let error = vm.authError {
+                                HStack {
+                                    Image(systemName: "exclamationmark.circle.fill")
+                                    Text(error)
+                                        .font(PCFont.caption())
+                                }
+                                .foregroundStyle(Color.pcRed)
+                                .transition(.opacity.combined(with: .scale))
+                            }
+
+                            PCPrimaryButton(isLoading ? "Memuat..." : "Masuk", icon: "arrow.right") {
                                 login()
                             }
+                            .disabled(isLoading)
 
                             divider
 
@@ -124,9 +136,12 @@ struct LoginView: View {
 
     private func login() {
         isLoading = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-            isLoading = false
-            vm.login(email: email, password: password)
+        vm.login(email: email, password: password)
+        // Reset loading after a delay if no error (since Firebase callback is async)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if vm.authError == nil {
+                isLoading = false
+            }
         }
     }
 }
@@ -142,6 +157,7 @@ struct RegisterView: View {
     @State private var password = ""
     @State private var confirm  = ""
     @State private var appeared = false
+    @State private var isLoading = false
 
     private var passwordStrength: (label: String, color: Color, progress: Double) {
         let len = password.count
@@ -210,11 +226,22 @@ struct RegisterView: View {
                             .transition(.opacity.combined(with: .scale))
                         }
 
-                        PCPrimaryButton("Daftar Sekarang", icon: "checkmark") {
-                            vm.login(email: email, password: password)
+                        // Error message
+                        if let error = vm.authError {
+                            HStack {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                Text(error)
+                                    .font(PCFont.caption())
+                            }
+                            .foregroundStyle(Color.pcRed)
+                            .transition(.opacity.combined(with: .scale))
                         }
-                        .disabled(!canSubmit)
-                        .opacity(canSubmit ? 1.0 : 0.55)
+
+                        PCPrimaryButton(isLoading ? "Memuat..." : "Daftar Sekarang", icon: "checkmark") {
+                            register()
+                        }
+                        .disabled(!canSubmit || isLoading)
+                        .opacity((canSubmit && !isLoading) ? 1.0 : 0.55)
                     }
                     .padding(PCSpace.xl)
                     .elevatedGlass(radius: PCRadius.xxl)
@@ -245,6 +272,16 @@ struct RegisterView: View {
 
     private var canSubmit: Bool {
         !name.isEmpty && !email.isEmpty && password.count >= 8 && password == confirm
+    }
+
+    private func register() {
+        isLoading = true
+        vm.register(name: name, email: email, password: password)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            if vm.authError == nil {
+                isLoading = false
+            }
+        }
     }
 }
 

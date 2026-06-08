@@ -3,6 +3,7 @@
 
 import SwiftUI
 import Combine
+import FirebaseAuth
 
 @MainActor
 final class AppViewModel: ObservableObject {
@@ -11,6 +12,7 @@ final class AppViewModel: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var currentUser: AppUser = SampleData.user
     @Published var showOnboarding: Bool = true
+    @Published var authError: String?
 
     // MARK: Pets
     @Published var pets: [Pet] = SampleData.pets
@@ -84,11 +86,55 @@ final class AppViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Firebase Auth
+
     func login(email: String, password: String) {
-        withAnimation(.pcSpring) { isLoggedIn = true }
+        authError = nil
+        Task {
+            do {
+                let result = try await Auth.auth().signIn(withEmail: email, password: password)
+                let user = result.user
+                currentUser = AppUser(
+                    id: UUID(),
+                    name: user.displayName ?? email.components(separatedBy: "@").first ?? "User",
+                    email: user.email ?? email,
+                    profileImageName: nil,
+                    joinDate: Date()
+                )
+                withAnimation(.pcSpring) { isLoggedIn = true }
+            } catch {
+                authError = error.localizedDescription
+            }
+        }
+    }
+
+    func register(name: String, email: String, password: String) {
+        authError = nil
+        Task {
+            do {
+                let result = try await Auth.auth().createUser(withEmail: email, password: password)
+                let user = result.user
+                currentUser = AppUser(
+                    id: UUID(),
+                    name: name,
+                    email: user.email ?? email,
+                    profileImageName: nil,
+                    joinDate: Date()
+                )
+                withAnimation(.pcSpring) { isLoggedIn = true }
+            } catch {
+                authError = error.localizedDescription
+            }
+        }
     }
 
     func logout() {
-        withAnimation(.pcSpring) { isLoggedIn = false }
+        do {
+            try Auth.auth().signOut()
+            withAnimation(.pcSpring) { isLoggedIn = false }
+            currentUser = SampleData.user
+        } catch {
+            authError = error.localizedDescription
+        }
     }
 }
