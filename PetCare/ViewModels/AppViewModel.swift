@@ -102,9 +102,29 @@ final class AppViewModel: ObservableObject {
                     joinDate: Date()
                 )
                 withAnimation(.pcSpring) { isLoggedIn = true }
-            } catch {
-                authError = error.localizedDescription
+            } catch let error as NSError {
+                authError = mapAuthError(error)
             }
+        }
+    }
+
+    private func mapAuthError(_ error: NSError) -> String {
+        let errorCode = AuthErrorCode(rawValue: error.code)
+        switch errorCode {
+        case .wrongPassword:
+            return "Salah password"
+        case .userNotFound:
+            return "Akun tidak ditemukan"
+        case .invalidEmail:
+            return "Email tidak valid"
+        case .userDisabled:
+            return "Akun telah dinonaktifkan"
+        case .networkError:
+            return "Kesalahan jaringan"
+        case .tooManyRequests:
+            return "Terlalu banyak percobaan, coba lagi nanti"
+        default:
+            return "Login gagal. Periksa email dan password Anda"
         }
     }
 
@@ -122,9 +142,42 @@ final class AppViewModel: ObservableObject {
                     joinDate: Date()
                 )
                 withAnimation(.pcSpring) { isLoggedIn = true }
-            } catch {
-                authError = error.localizedDescription
+            } catch let error as NSError {
+                authError = mapAuthError(error)
             }
+        }
+    }
+
+    func resetPassword(email: String, completion: @escaping (Bool) -> Void) {
+        authError = nil
+        Task {
+            do {
+                try await Auth.auth().sendPasswordReset(withEmail: email)
+                await MainActor.run {
+                    completion(true)
+                }
+            } catch let error as NSError {
+                await MainActor.run {
+                    authError = mapResetPasswordError(error)
+                    completion(false)
+                }
+            }
+        }
+    }
+
+    private func mapResetPasswordError(_ error: NSError) -> String {
+        let errorCode = AuthErrorCode(rawValue: error.code)
+        switch errorCode {
+        case .userNotFound:
+            return "Akun tidak ditemukan"
+        case .invalidEmail:
+            return "Email tidak valid"
+        case .networkError:
+            return "Kesalahan jaringan"
+        case .tooManyRequests:
+            return "Terlalu banyak percobaan, coba lagi nanti"
+        default:
+            return "Gagal mengirim email reset. Coba lagi nanti"
         }
     }
 
@@ -135,6 +188,12 @@ final class AppViewModel: ObservableObject {
             currentUser = SampleData.user
         } catch {
             authError = error.localizedDescription
+        }
+    }
+
+    func updateProfile(name: String) {
+        withAnimation(.pcSpring) {
+            currentUser.name = name
         }
     }
 }

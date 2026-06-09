@@ -108,6 +108,7 @@ struct PCTextField: View {
     @Binding var text: String
     var keyboardType: UIKeyboardType = .default
     var isSecure: Bool = false
+    var autocapitalization: TextInputAutocapitalization = .never
     @State private var showSecure = false
     @FocusState private var focused: Bool
 
@@ -122,9 +123,11 @@ struct PCTextField: View {
                 Group {
                     if isSecure && !showSecure {
                         SecureField(placeholder, text: $text)
+                            .textInputAutocapitalization(autocapitalization)
                     } else {
                         TextField(placeholder, text: $text)
                             .keyboardType(keyboardType)
+                            .textInputAutocapitalization(autocapitalization)
                     }
                 }
                 .font(PCFont.subhead())

@@ -11,6 +11,7 @@ struct ProfileView: View {
     @State private var darkMode = false
     @State private var notifEnabled = true
     @State private var appeared = false
+    @State private var showEditProfile = false
 
     var body: some View {
         ZStack {
@@ -31,7 +32,7 @@ struct ProfileView: View {
                     // Account Settings
                     menuSection(title: "Akun") {
                         PCMenuRow(icon: "pencil", iconBg: Color.pcIndigo,
-                                  title: "Edit Profil") {}
+                                  title: "Edit Profil") { showEditProfile = true }
                         PCMenuRow(icon: "bell.fill", iconBg: Color.pcOrange,
                                   title: "Pengaturan Notifikasi",
                                   badge: "\(vm.unreadCount)") {}
@@ -68,6 +69,9 @@ struct ProfileView: View {
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear { withAnimation(.pcSpring) { appeared = true } }
+        .sheet(isPresented: $showEditProfile) {
+            EditProfileSheetView()
+        }
     }
 
     // MARK: Profile Hero
@@ -251,6 +255,106 @@ struct NotifRow: View {
             RoundedRectangle(cornerRadius: PCRadius.lg, style: .continuous)
                 .stroke(notification.isRead ? Color.clear : Color.pcIndigo.opacity(0.20), lineWidth: 1)
         )
+    }
+}
+
+// ─────────────────────────────────────────
+// MARK: EditProfileSheetView
+// ─────────────────────────────────────────
+struct EditProfileSheetView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var vm: AppViewModel
+    @State private var name: String = ""
+    @State private var appeared = false
+    @State private var isSaving = false
+
+    var body: some View {
+        ZStack {
+            PCMeshBackground()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Edit Profil")
+                            .font(PCFont.display(.black))
+                            .foregroundStyle(Color.pcText1)
+                        Text("Perbarui informasi profil Anda")
+                            .font(PCFont.subhead())
+                            .foregroundStyle(Color.pcText2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, PCSpace.lg)
+                    .offset(y: appeared ? 0 : 20)
+                    .opacity(appeared ? 1 : 0)
+
+                    Spacer().frame(height: 32)
+
+                    // Profile Avatar
+                    VStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.primaryGradient)
+                                .frame(width: 84, height: 84)
+                                .shadow(color: Color.pcIndigo.opacity(0.35), radius: 16, x: 0, y: 6)
+                            Text("🧑").font(.system(size: 40))
+                        }
+                    }
+                    .offset(y: appeared ? 0 : 20)
+                    .opacity(appeared ? 1 : 0)
+
+                    Spacer().frame(height: 24)
+
+                    // Form card
+                    VStack(spacing: 18) {
+                        PCTextField(label: "Nama Lengkap", placeholder: "Nama lengkap Anda", text: $name)
+
+                        PCPrimaryButton(isSaving ? "Menyimpan..." : "Simpan Perubahan", icon: "checkmark") {
+                            saveProfile()
+                        }
+                        .disabled(name.isEmpty || isSaving)
+                        .opacity((!name.isEmpty && !isSaving) ? 1.0 : 0.55)
+                    }
+                    .padding(PCSpace.xl)
+                    .elevatedGlass(radius: PCRadius.xxl)
+                    .padding(.horizontal, PCSpace.lg)
+                    .offset(y: appeared ? 0 : 30)
+                    .opacity(appeared ? 1 : 0)
+
+                    Spacer().frame(height: 40)
+                }
+            }
+
+            // Close button
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Color.pcText2)
+                    }
+                    .padding(PCSpace.lg)
+                }
+                Spacer()
+            }
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+            name = vm.currentUser.name
+            withAnimation(.pcSpring.delay(0.1)) { appeared = true }
+        }
+    }
+
+    private func saveProfile() {
+        isSaving = true
+        vm.updateProfile(name: name)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            isSaving = false
+            dismiss()
+        }
     }
 }
 

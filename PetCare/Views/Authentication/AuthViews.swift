@@ -8,10 +8,11 @@ import SwiftUI
 // ─────────────────────────────────────────
 struct LoginView: View {
     @EnvironmentObject var vm: AppViewModel
-    @State private var email    = "fikri@dinuswantara.ac.id"
-    @State private var password = "password123"
+    @State private var email    = ""
+    @State private var password = ""
     @State private var appeared = false
     @State private var isLoading = false
+    @State private var showForgotPassword = false
 
     var body: some View {
         NavigationStack {
@@ -48,6 +49,7 @@ struct LoginView: View {
                             HStack {
                                 Spacer()
                                 Button {
+                                    showForgotPassword = true
                                 } label: {
                                     Text("Lupa Password?")
                                         .font(PCFont.footnote().weight(.semibold))
@@ -107,6 +109,14 @@ struct LoginView: View {
         .onAppear {
             withAnimation(.pcSpring.delay(0.1)) { appeared = true }
         }
+        .onChange(of: vm.authError) { _, newValue in
+            if newValue != nil {
+                isLoading = false
+            }
+        }
+        .sheet(isPresented: $showForgotPassword) {
+            ForgotPasswordView()
+        }
     }
 
     private var divider: some View {
@@ -137,12 +147,6 @@ struct LoginView: View {
     private func login() {
         isLoading = true
         vm.login(email: email, password: password)
-        // Reset loading after a delay if no error (since Firebase callback is async)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            if vm.authError == nil {
-                isLoading = false
-            }
-        }
     }
 }
 
@@ -280,6 +284,119 @@ struct RegisterView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             if vm.authError == nil {
                 isLoading = false
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────
+// MARK: ForgotPasswordView
+// ─────────────────────────────────────────
+struct ForgotPasswordView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var vm: AppViewModel
+    @State private var email = ""
+    @State private var isLoading = false
+    @State private var showSuccess = false
+    @State private var appeared = false
+
+    var body: some View {
+        ZStack {
+            PCMeshBackground()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Lupa\nPassword? 🔑")
+                            .font(PCFont.display(.black))
+                            .foregroundStyle(Color.pcText1)
+                        Text("Masukkan email untuk mereset password")
+                            .font(PCFont.subhead())
+                            .foregroundStyle(Color.pcText2)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, PCSpace.lg)
+                    .offset(y: appeared ? 0 : 20)
+                    .opacity(appeared ? 1 : 0)
+
+                    Spacer().frame(height: 32)
+
+                    // Form card
+                    VStack(spacing: 18) {
+                        PCTextField(label: "Email", placeholder: "contoh@email.com",
+                                    text: $email, keyboardType: .emailAddress)
+
+                        // Error message
+                        if let error = vm.authError {
+                            HStack {
+                                Image(systemName: "exclamationmark.circle.fill")
+                                Text(error)
+                                    .font(PCFont.caption())
+                            }
+                            .foregroundStyle(Color.pcRed)
+                            .transition(.opacity.combined(with: .scale))
+                        }
+
+                        PCPrimaryButton(isLoading ? "Mengirim..." : "Kirim Link Reset", icon: "envelope.fill") {
+                            resetPassword()
+                        }
+                        .disabled(email.isEmpty || isLoading)
+                        .opacity((!email.isEmpty && !isLoading) ? 1.0 : 0.55)
+
+                        Text("Kami akan mengirimkan link reset password ke email Anda")
+                            .font(PCFont.caption())
+                            .foregroundStyle(Color.pcText3)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(PCSpace.xl)
+                    .elevatedGlass(radius: PCRadius.xxl)
+                    .padding(.horizontal, PCSpace.lg)
+                    .offset(y: appeared ? 0 : 30)
+                    .opacity(appeared ? 1 : 0)
+
+                    Spacer().frame(height: 40)
+                }
+            }
+
+            // Close button
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(Color.pcText2)
+                    }
+                    .padding(PCSpace.lg)
+                }
+                Spacer()
+            }
+        }
+        .navigationBarHidden(true)
+        .onAppear {
+            withAnimation(.pcSpring.delay(0.1)) { appeared = true }
+        }
+        .onChange(of: vm.authError) { _, newValue in
+            if newValue != nil {
+                isLoading = false
+            }
+        }
+        .alert("Email Terkirim", isPresented: $showSuccess) {
+            Button("OK") { dismiss() }
+        } message: {
+            Text("Link reset password telah dikirim ke email Anda. Periksa inbox atau folder spam.")
+        }
+    }
+
+    private func resetPassword() {
+        isLoading = true
+        vm.resetPassword(email: email) { success in
+            isLoading = false
+            if success {
+                showSuccess = true
             }
         }
     }
