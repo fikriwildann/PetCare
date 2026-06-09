@@ -48,7 +48,19 @@ struct ScheduleView: View {
             .opacity(appeared ? 1 : 0)
             .offset(y: appeared ? 0 : 20)
 
-            PCFAB(icon: "plus") {}
+            Menu {
+                Button { vm.showAddFeeding = true } label: {
+                    Label("Jadwal Makan", systemImage: "fork.knife")
+                }
+                Button { vm.showAddVaccine = true } label: {
+                    Label("Jadwal Vaksin", systemImage: "syringe.fill")
+                }
+                Button { vm.showAddMedication = true } label: {
+                    Label("Jadwal Obat", systemImage: "pills.fill")
+                }
+            } label: {
+                PCFAB(icon: "plus") {}
+            }
                 .padding(.trailing, PCSpace.lg)
                 .padding(.bottom, 100)
         }
