@@ -314,7 +314,11 @@ struct AddPetView: View {
     private func save() {
         let pet = Pet(name: name, type: type, breed: breed, birthDate: birthDate,
                       gender: gender, weight: Double(weight) ?? 0, notes: notes.isEmpty ? nil : notes)
-        vm.addPet(pet); dismiss()
+        vm.addPet(pet)
+        vm.selectedPet = pet
+        vm.selectedTab = 2
+        vm.showAddFeeding = true
+        dismiss()
     }
 }
 

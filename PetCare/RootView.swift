@@ -77,6 +77,7 @@ struct MainTabView: View {
         .sheet(isPresented: $showNotifications) {
             NotificationsView()
         }
+        .globalSheets()
     }
 }
 
