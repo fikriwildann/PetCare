@@ -45,6 +45,47 @@ enum PetGender: String, Codable, CaseIterable {
     var symbol: String { self == .male ? "♂" : "♀" }
 }
 
+// MARK: - Pet Firestore Extensions
+extension Pet {
+    var toDictionary: [String: Any] {
+        [
+            "id": id.uuidString,
+            "name": name,
+            "type": type.rawValue,
+            "breed": breed,
+            "birthDate": birthDate.timeIntervalSince1970,
+            "gender": gender.rawValue,
+            "weight": weight,
+            "photoName": photoName ?? "",
+            "notes": notes ?? "",
+            "createdAt": createdAt.timeIntervalSince1970
+        ]
+    }
+
+    static func from(dictionary dict: [String: Any]) -> Pet? {
+        guard let idString = dict["id"] as? String,
+              let name = dict["name"] as? String,
+              let typeRaw = dict["type"] as? String,
+              let breed = dict["breed"] as? String,
+              let birthDateInterval = dict["birthDate"] as? TimeInterval,
+              let genderRaw = dict["gender"] as? String,
+              let weight = dict["weight"] as? Double
+        else { return nil }
+        return Pet(
+            id: UUID(uuidString: idString) ?? UUID(),
+            name: name,
+            type: PetType(rawValue: typeRaw) ?? .other,
+            breed: breed,
+            birthDate: Date(timeIntervalSince1970: birthDateInterval),
+            gender: PetGender(rawValue: genderRaw) ?? .male,
+            weight: weight,
+            photoName: (dict["photoName"] as? String)?.isEmpty == true ? nil : dict["photoName"] as? String,
+            notes: (dict["notes"] as? String)?.isEmpty == true ? nil : dict["notes"] as? String,
+            createdAt: Date(timeIntervalSince1970: dict["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970)
+        )
+    }
+}
+
 // MARK: - Vaccine
 struct Vaccine: Identifiable, Codable {
     var id: UUID = UUID()

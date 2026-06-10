@@ -142,17 +142,15 @@ struct EditPetView: View {
     }
 
     private func save() {
-        if let i = vm.pets.firstIndex(where: { $0.id == pet.id }) {
-            var updated = vm.pets[i]
-            updated.name      = name
-            updated.type      = type
-            updated.breed     = breed
-            updated.birthDate = birthDate
-            updated.gender    = gender
-            updated.weight    = Double(weight) ?? pet.weight
-            updated.notes     = notes.isEmpty ? nil : notes
-            withAnimation(.pcSpring) { vm.pets[i] = updated }
-        }
+        var updated = pet
+        updated.name      = name
+        updated.type      = type
+        updated.breed     = breed
+        updated.birthDate = birthDate
+        updated.gender    = gender
+        updated.weight    = Double(weight) ?? pet.weight
+        updated.notes     = notes.isEmpty ? nil : notes
+        vm.updatePet(updated)
         dismiss()
     }
 }

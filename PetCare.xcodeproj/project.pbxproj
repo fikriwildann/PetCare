@@ -18,7 +18,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2C8B08202FD6A57300340C63 /* PetCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PetCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2C8B08202FD6A57300340C63 /* PetCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = PetCare.app; path = "/Users/icodewavecommunity/Library/Mobile Documents/com~apple~CloudDocs/iCodeWave Community/PetCare/build/Debug-iphoneos/PetCare.app"; sourceTree = "<absolute>"; };
 		B49FB0502FD914BF00844FFC /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -52,17 +52,8 @@
 			isa = PBXGroup;
 			children = (
 				2C8B08222FD6A57300340C63 /* PetCare */,
-				2C8B08212FD6A57300340C63 /* Products */,
 				B49FB0502FD914BF00844FFC /* GoogleService-Info.plist */,
 			);
-			sourceTree = "<group>";
-		};
-		2C8B08212FD6A57300340C63 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				2C8B08202FD6A57300340C63 /* PetCare.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -125,7 +116,7 @@
 				2C8B08A02FD6C28900340C63 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 2C8B08212FD6A57300340C63 /* Products */;
+			productRefGroup = 2C8B08172FD6A57300340C63;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (

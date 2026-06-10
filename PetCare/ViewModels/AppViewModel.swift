@@ -67,8 +67,20 @@ final class AppViewModel: ObservableObject {
     func petName(for id: UUID) -> String { pets.first { $0.id == id }?.name ?? "—" }
 
     // MARK: Actions
-    func addPet(_ pet: Pet) { withAnimation(.pcSpring) { pets.append(pet) } }
-    func deletePet(_ pet: Pet) { withAnimation(.pcSpring) { pets.removeAll { $0.id == pet.id } } }
+    func addPet(_ pet: Pet) {
+        withAnimation(.pcSpring) { pets.append(pet) }
+        Task { try? await FirebasePetService.shared.addPet(pet) }
+    }
+    func deletePet(_ pet: Pet) {
+        withAnimation(.pcSpring) { pets.removeAll { $0.id == pet.id } }
+        Task { try? await FirebasePetService.shared.deletePet(id: pet.id) }
+    }
+    func updatePet(_ pet: Pet) {
+        if let i = pets.firstIndex(where: { $0.id == pet.id }) {
+            withAnimation(.pcSpring) { pets[i] = pet }
+            Task { try? await FirebasePetService.shared.updatePet(pet) }
+        }
+    }
 
     func addVaccine(_ v: Vaccine) {
         withAnimation(.pcSpring) { vaccines.append(v) }
@@ -93,6 +105,17 @@ final class AppViewModel: ObservableObject {
     }
 
     // MARK: - Load from Firestore
+    func loadPetsFromFirestore() async {
+        do {
+            let loadedPets = try await FirebasePetService.shared.loadPets()
+            await MainActor.run {
+                withAnimation(.pcSpring) { pets = loadedPets }
+            }
+        } catch {
+            print("Gagal memuat pets dari Firestore: \(error)")
+        }
+    }
+
     func loadSchedulesFromFirestore() async {
         do {
             async let loadedFeedings = FirebaseScheduleService.shared.loadFeedings()
@@ -134,6 +157,7 @@ final class AppViewModel: ObservableObject {
                     joinDate: Date()
                 )
                 withAnimation(.pcSpring) { isLoggedIn = true }
+                await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
             } catch let error as NSError {
                 authError = mapAuthError(error)
@@ -181,6 +205,7 @@ final class AppViewModel: ObservableObject {
                     joinDate: Date()
                 )
                 withAnimation(.pcSpring) { isLoggedIn = true }
+                await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
             } catch let error as NSError {
                 authError = mapAuthError(error)
@@ -234,6 +259,14 @@ final class AppViewModel: ObservableObject {
     func updateProfile(name: String) {
         withAnimation(.pcSpring) {
             currentUser.name = name
+        }
+        // Update Firebase Auth displayName
+        Task {
+            if let user = Auth.auth().currentUser {
+                let changeRequest = user.createProfileChangeRequest()
+                changeRequest.displayName = name
+                try? await changeRequest.commitChanges()
+            }
         }
     }
 }
