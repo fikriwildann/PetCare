@@ -4,6 +4,7 @@
 import SwiftUI
 import Combine
 import FirebaseAuth
+import FirebaseFirestore
 
 @MainActor
 final class AppViewModel: ObservableObject {
@@ -69,14 +70,45 @@ final class AppViewModel: ObservableObject {
     func addPet(_ pet: Pet) { withAnimation(.pcSpring) { pets.append(pet) } }
     func deletePet(_ pet: Pet) { withAnimation(.pcSpring) { pets.removeAll { $0.id == pet.id } } }
 
-    func addVaccine(_ v: Vaccine) { withAnimation(.pcSpring) { vaccines.append(v) } }
-    func addMedication(_ m: Medication) { withAnimation(.pcSpring) { medications.append(m) } }
-    func addFeeding(_ f: FeedingSchedule) { withAnimation(.pcSpring) { feedings.append(f) } }
+    func addVaccine(_ v: Vaccine) {
+        withAnimation(.pcSpring) { vaccines.append(v) }
+        Task { try? await FirebaseScheduleService.shared.addVaccine(v) }
+    }
+    func addMedication(_ m: Medication) {
+        withAnimation(.pcSpring) { medications.append(m) }
+        Task { try? await FirebaseScheduleService.shared.addMedication(m) }
+    }
+    func addFeeding(_ f: FeedingSchedule) {
+        withAnimation(.pcSpring) { feedings.append(f) }
+        Task { try? await FirebaseScheduleService.shared.addFeeding(f) }
+    }
     func addHealthRecord(_ r: HealthRecord) { withAnimation(.pcSpring) { healthRecords.append(r) } }
 
     func toggleFeedingComplete(_ id: UUID) {
         if let i = feedings.firstIndex(where: { $0.id == id }) {
-            withAnimation(.pcSpring) { feedings[i].isCompleted.toggle() }
+            let newValue = !feedings[i].isCompleted
+            withAnimation(.pcSpring) { feedings[i].isCompleted = newValue }
+            Task { try? await FirebaseScheduleService.shared.toggleFeedingComplete(id: id, isCompleted: newValue) }
+        }
+    }
+
+    // MARK: - Load from Firestore
+    func loadSchedulesFromFirestore() async {
+        do {
+            async let loadedFeedings = FirebaseScheduleService.shared.loadFeedings()
+            async let loadedVaccines = FirebaseScheduleService.shared.loadVaccines()
+            async let loadedMedications = FirebaseScheduleService.shared.loadMedications()
+
+            let (f, v, m) = try await (loadedFeedings, loadedVaccines, loadedMedications)
+            await MainActor.run {
+                withAnimation(.pcSpring) {
+                    feedings = f
+                    vaccines = v
+                    medications = m
+                }
+            }
+        } catch {
+            print("Gagal memuat jadwal dari Firestore: \(error)")
         }
     }
 
@@ -102,6 +134,7 @@ final class AppViewModel: ObservableObject {
                     joinDate: Date()
                 )
                 withAnimation(.pcSpring) { isLoggedIn = true }
+                await loadSchedulesFromFirestore()
             } catch let error as NSError {
                 authError = mapAuthError(error)
             }
@@ -148,6 +181,7 @@ final class AppViewModel: ObservableObject {
                     joinDate: Date()
                 )
                 withAnimation(.pcSpring) { isLoggedIn = true }
+                await loadSchedulesFromFirestore()
             } catch let error as NSError {
                 authError = mapAuthError(error)
             }

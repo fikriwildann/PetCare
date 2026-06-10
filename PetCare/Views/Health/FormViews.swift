@@ -524,3 +524,120 @@ func noteEditor(text: Binding<String>) -> some View {
 #Preview("Add Medication") { AddMedicationView().environmentObject(AppViewModel()) }
 #Preview("Add Health Record") { AddHealthRecordView().environmentObject(AppViewModel()) }
 #Preview("Add Feeding") { AddFeedingView().environmentObject(AppViewModel()) }
+
+// ─────────────────────────────────────────
+// MARK: AddScheduleFeedingView (used by ScheduleView)
+// ─────────────────────────────────────────
+struct AddScheduleFeedingView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var vm: AppViewModel
+
+    @State private var selectedPetId: UUID?
+    @State private var mealType  = MealType.breakfast
+    @State private var time      = Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())!
+    @State private var foodName  = ""
+    @State private var portion   = ""
+    @State private var notes     = ""
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                PCMeshBackground()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        Spacer().frame(height: 4)
+
+                        formCard {
+                            sectionLabel("Pilih Hewan")
+                            if vm.pets.isEmpty {
+                                Text("Belum ada hewan. Tambah dulu di menu Pets.")
+                                    .font(PCFont.caption()).foregroundStyle(Color.pcText3)
+                                    .padding(.vertical, 8)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(vm.pets) { p in
+                                            PetPickerChip(pet: p, selected: selectedPetId == p.id) {
+                                                withAnimation(.pcSpring) { selectedPetId = p.id }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Waktu Makan")
+                            HStack(spacing: 10) {
+                                ForEach(MealType.allCases, id: \.self) { t in
+                                    Button { withAnimation(.pcSpring) { mealType = t } } label: {
+                                        VStack(spacing: 6) {
+                                            Text(t.emoji).font(.system(size: 22))
+                                            Text(t.rawValue)
+                                                .font(PCFont.micro()).lineLimit(1)
+                                        }
+                                        .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                        .foregroundStyle(mealType == t ? t.color : Color.pcText2)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: PCRadius.sm, style: .continuous)
+                                                .fill(mealType == t ? t.color.opacity(0.12) : Color.clear)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: PCRadius.sm, style: .continuous)
+                                                        .stroke(mealType == t ? t.color.opacity(0.30) : Color.pcBorder,
+                                                                lineWidth: 1))
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("JAM MAKAN").font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
+                                DatePicker("", selection: $time, displayedComponents: .hourAndMinute)
+                                    .datePickerStyle(.wheel)
+                                    .labelsHidden()
+                                    .tint(Color.pcIndigo)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Makanan")
+                            PCTextField(label: "Nama Makanan", placeholder: "Contoh: Dry Food Premium", text: $foodName)
+                            PCTextField(label: "Porsi", placeholder: "Contoh: 200 gram", text: $portion)
+                        }
+
+                        formCard {
+                            sectionLabel("Catatan (Opsional)")
+                            noteEditor(text: $notes)
+                        }
+
+                        PCPrimaryButton("Simpan Jadwal Makan", icon: "checkmark") { save() }
+                            .padding(.horizontal, PCSpace.lg)
+                            .disabled(foodName.isEmpty || selectedPetId == nil)
+                            .opacity(foodName.isEmpty || selectedPetId == nil ? 0.5 : 1)
+
+                        Spacer().frame(height: 40)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") { dismiss() }.foregroundStyle(Color.pcIndigo)
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("Tambah Jadwal Makan").font(PCFont.headline()).foregroundStyle(Color.pcText1)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let petId = selectedPetId else { return }
+        let f = FeedingSchedule(petId: petId, mealType: mealType, time: time,
+                                foodName: foodName, portion: portion,
+                                notes: notes.isEmpty ? nil : notes)
+        vm.addFeeding(f); dismiss()
+    }
+}

@@ -12,7 +12,7 @@ struct GlobalSheetModifier: ViewModifier {
         content
             .sheet(isPresented: $vm.showAddVaccine)      { AddVaccineView() }
             .sheet(isPresented: $vm.showAddMedication)   { AddMedicationView() }
-            .sheet(isPresented: $vm.showAddFeeding)      { AddFeedingView() }
+            .sheet(isPresented: $vm.showAddFeeding)      { AddScheduleFeedingView() }
             .sheet(isPresented: $vm.showAddHealthRecord) { AddHealthRecordView() }
     }
 }
