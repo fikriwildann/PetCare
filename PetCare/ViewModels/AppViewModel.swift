@@ -134,6 +134,12 @@ final class AppViewModel: ObservableObject {
             do {
                 let result = try await Auth.auth().createUser(withEmail: email, password: password)
                 let user = result.user
+
+                // Simpan nama lengkap ke Firebase Auth displayName
+                let changeRequest = user.createProfileChangeRequest()
+                changeRequest.displayName = name
+                try await changeRequest.commitChanges()
+
                 currentUser = AppUser(
                     id: UUID(),
                     name: name,

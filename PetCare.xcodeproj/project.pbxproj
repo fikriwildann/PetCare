@@ -14,10 +14,12 @@
 		2C8B08AA2FD6C28900340C63 /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 2C8B08A92FD6C28900340C63 /* FirebaseDatabase */; };
 		2C8B08AC2FD6C28900340C63 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 2C8B08AB2FD6C28900340C63 /* FirebaseFirestore */; };
 		2C8B08AE2FD6C28900340C63 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 2C8B08AD2FD6C28900340C63 /* FirebaseStorage */; };
+		B49FB0512FD914C000844FFC /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = B49FB0502FD914BF00844FFC /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2C8B08202FD6A57300340C63 /* PetCare.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PetCare.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B49FB0502FD914BF00844FFC /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -51,6 +53,7 @@
 			children = (
 				2C8B08222FD6A57300340C63 /* PetCare */,
 				2C8B08212FD6A57300340C63 /* Products */,
+				B49FB0502FD914BF00844FFC /* GoogleService-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};
@@ -136,6 +139,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B49FB0512FD914C000844FFC /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

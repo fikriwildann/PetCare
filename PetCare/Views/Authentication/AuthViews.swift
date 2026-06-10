@@ -73,11 +73,6 @@ struct LoginView: View {
                                 login()
                             }
                             .disabled(isLoading)
-
-                            divider
-
-                            // Apple Sign In
-                            appleSignInButton
                         }
                         .padding(PCSpace.xl)
                         .elevatedGlass(radius: PCRadius.xxl)
@@ -117,31 +112,6 @@ struct LoginView: View {
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
-    }
-
-    private var divider: some View {
-        HStack {
-            Rectangle().fill(Color.pcBorder).frame(height: 0.5)
-            Text("atau").font(PCFont.caption()).foregroundStyle(Color.pcText3).padding(.horizontal, 12)
-            Rectangle().fill(Color.pcBorder).frame(height: 0.5)
-        }
-    }
-
-    private var appleSignInButton: some View {
-        Button {
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "applelogo")
-                    .font(.system(size: 18, weight: .semibold))
-                Text("Masuk dengan Apple")
-                    .font(PCFont.headline())
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 54)
-            .foregroundStyle(Color.pcText1)
-            .liquidGlass(radius: PCRadius.lg)
-        }
-        .buttonStyle(.plain)
     }
 
     private func login() {
