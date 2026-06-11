@@ -8,6 +8,7 @@ import SwiftUI
 // ─────────────────────────────────────────
 struct PetsListView: View {
     @EnvironmentObject var vm: AppViewModel
+    @Environment(\.dismiss) var dismiss
     @State private var search = ""
     @State private var filter: PetType? = nil
     @State private var appeared = false
@@ -29,6 +30,17 @@ struct PetsListView: View {
             VStack(spacing: 0) {
                 // Nav bar
                 HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.pcIndigo)
+                            .frame(width: 36, height: 36)
+                            .background(Color.pcIndigo.opacity(0.12))
+                            .clipShape(Circle())
+                    }
+
                     Text("Hewan Saya")
                         .font(PCFont.title1(.black))
                         .foregroundStyle(Color.pcText1)
@@ -161,7 +173,7 @@ struct AddPetView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var vm: AppViewModel
 
-    @State private var name     = ""
+    @State private var name = ""
     @State private var type: PetType = .dog
     @State private var breed    = ""
     @State private var birthDate = Date()
@@ -182,42 +194,39 @@ struct AddPetView: View {
                                     .fill(Color.primaryGradient)
                                     .frame(width: 96, height: 96)
                                     .shadow(color: Color.pcIndigo.opacity(0.35), radius: 16, x: 0, y: 6)
-                                Text(type.emoji).font(.system(size: 46))
+                                Text(type.emoji).font(.system(size: 44))
                             }
-                            Text("Tap untuk tambah foto")
+                            Text("Tambah Foto")
                                 .font(PCFont.caption())
-                                .foregroundStyle(Color.pcIndigo)
+                                .foregroundStyle(Color.pcText2)
                         }
-                        .padding(.top, PCSpace.md)
+                        .padding(.top, PCSpace.lg)
 
-                        // Form card
-                        VStack(spacing: 18) {
-                            sectionHeader("Informasi Dasar")
-                            PCTextField(label: "Nama Hewan", placeholder: "Contoh: Buddy", text: $name)
+                        // Form
+                        VStack(spacing: 16) {
+                            PCTextField(label: "Nama", placeholder: "Nama hewan", text: $name)
 
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("JENIS HEWAN")
-                                    .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
+                            // Pet Type Picker
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Jenis")
+                                    .font(PCFont.caption())
+                                    .foregroundStyle(Color.pcText2)
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 8) {
-                                        ForEach(PetType.allCases, id: \.self) { t in
-                                            Button { withAnimation(.pcSpring) { type = t } } label: {
-                                                HStack(spacing: 6) {
-                                                    Text(t.emoji)
-                                                    Text(t.rawValue)
-                                                        .font(PCFont.caption().weight(.semibold))
-                                                }
-                                                .padding(.horizontal, 14).padding(.vertical, 9)
-                                                .foregroundStyle(type == t ? .white : Color.pcText2)
-                                                .background(
-                                                    Capsule()
-                                                        .fill(type == t
-                                                              ? AnyShapeStyle(Color.primaryGradient)
-                                                              : AnyShapeStyle(Color.clear))
-                                                        .overlay(Capsule()
-                                                            .stroke(type == t ? Color.clear : Color.pcBorder,
-                                                                    lineWidth: 1))
-                                                )
+                                        ForEach(PetType.allCases, id: \.self) { petType in
+                                            Button {
+                                                type = petType
+                                            } label: {
+                                                Text("\(petType.emoji) \(petType.rawValue)")
+                                                    .font(PCFont.caption().weight(.semibold))
+                                                    .foregroundStyle(type == petType ? .white : Color.pcText2)
+                                                    .padding(.horizontal, 16).padding(.vertical, 8)
+                                                    .background(
+                                                        Capsule().fill(type == petType
+                                                                       ? AnyShapeStyle(Color.primaryGradient)
+                                                                       : AnyShapeStyle(Color.clear))
+                                                        .overlay(Capsule().stroke(type == petType ? Color.clear : Color.pcBorder, lineWidth: 1))
+                                                    )
                                             }
                                             .buttonStyle(.plain)
                                         }
@@ -225,35 +234,40 @@ struct AddPetView: View {
                                 }
                             }
 
-                            PCTextField(label: "Ras", placeholder: "Contoh: Golden Retriever", text: $breed)
+                            PCTextField(label: "Ras", placeholder: "Ras/Jenis", text: $breed)
 
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("TANGGAL LAHIR")
-                                    .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-                                DatePicker("", selection: $birthDate, in: ...Date(), displayedComponents: .date)
+                            // Date Picker
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Tanggal Lahir")
+                                    .font(PCFont.caption())
+                                    .foregroundStyle(Color.pcText2)
+                                DatePicker("", selection: $birthDate, displayedComponents: .date)
                                     .datePickerStyle(.compact)
                                     .labelsHidden()
-                                    .tint(Color.pcIndigo)
+                                    .padding(PCSpace.md)
+                                    .background(Color.pcText1.opacity(0.05))
+                                    .cornerRadius(PCRadius.md)
                             }
 
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("JENIS KELAMIN")
-                                    .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-                                HStack(spacing: 10) {
-                                    ForEach(PetGender.allCases, id: \.self) { g in
-                                        Button { withAnimation(.pcSpring) { gender = g } } label: {
-                                            Text("\(g.symbol) \(g.rawValue)")
-                                                .font(PCFont.subhead().weight(.semibold))
-                                                .frame(maxWidth: .infinity).frame(height: 46)
-                                                .foregroundStyle(gender == g ? Color.pcIndigo : Color.pcText2)
+                            // Gender Picker
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Jenis Kelamin")
+                                    .font(PCFont.caption())
+                                    .foregroundStyle(Color.pcText2)
+                                HStack(spacing: 8) {
+                                    ForEach(PetGender.allCases, id: \.self) { petGender in
+                                        Button {
+                                            gender = petGender
+                                        } label: {
+                                            Text(petGender.rawValue)
+                                                .font(PCFont.caption().weight(.semibold))
+                                                .foregroundStyle(gender == petGender ? .white : Color.pcText2)
+                                                .padding(.horizontal, 20).padding(.vertical, 10)
                                                 .background(
-                                                    RoundedRectangle(cornerRadius: PCRadius.md, style: .continuous)
-                                                        .fill(gender == g
-                                                              ? Color.pcIndigo.opacity(0.10)
-                                                              : Color.clear)
-                                                        .overlay(
-                                                            RoundedRectangle(cornerRadius: PCRadius.md, style: .continuous)
-                                                                .stroke(gender == g ? Color.pcIndigo : Color.pcBorder, lineWidth: 1.5))
+                                                    Capsule().fill(gender == petGender
+                                                                   ? AnyShapeStyle(Color.primaryGradient)
+                                                                   : AnyShapeStyle(Color.clear))
+                                                    .overlay(Capsule().stroke(gender == petGender ? Color.clear : Color.pcBorder, lineWidth: 1))
                                                 )
                                         }
                                         .buttonStyle(.plain)
@@ -261,63 +275,46 @@ struct AddPetView: View {
                                 }
                             }
 
-                            PCTextField(label: "Berat Badan (kg)", placeholder: "0.0",
-                                        text: $weight, keyboardType: .decimalPad)
-
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text("CATATAN")
-                                    .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-                                TextEditor(text: $notes)
-                                    .font(PCFont.subhead())
-                                    .frame(height: 80)
-                                    .padding(12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: PCRadius.md, style: .continuous)
-                                            .fill(.ultraThinMaterial)
-                                            .overlay(RoundedRectangle(cornerRadius: PCRadius.md, style: .continuous)
-                                                .stroke(Color.pcBorder, lineWidth: 0.5)))
-                                    .scrollContentBackground(.hidden)
-                            }
+                            PCTextField(label: "Berat (kg)", placeholder: "Berat dalam kg", text: $weight, keyboardType: .decimalPad)
+                            PCTextField(label: "Catatan", placeholder: "Catatan kesehatan", text: $notes)
                         }
                         .padding(PCSpace.xl)
                         .elevatedGlass(radius: PCRadius.xxl)
-                        .padding(.horizontal, PCSpace.lg)
 
-                        // Save
-                        PCPrimaryButton("Simpan Hewan", icon: "checkmark") { save() }
-                            .padding(.horizontal, PCSpace.lg)
-                            .disabled(name.isEmpty)
-                            .opacity(name.isEmpty ? 0.5 : 1)
+                        // Save button
+                        PCPrimaryButton("Simpan", icon: "checkmark") {
+                            savePet()
+                        }
+                        .disabled(name.isEmpty)
+                        .opacity(name.isEmpty ? 0.55 : 1)
+                        .padding(.horizontal, PCSpace.lg)
 
                         Spacer().frame(height: 40)
                     }
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitle("", displayMode: .inline)
+            .navigationBarBackButtonHidden()
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Batal") { dismiss() }.foregroundStyle(Color.pcIndigo)
-                }
-                ToolbarItem(placement: .principal) {
-                    Text("Tambah Hewan").font(PCFont.headline()).foregroundStyle(Color.pcText1)
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 24))
+                            .foregroundStyle(Color.pcText2)
+                    }
                 }
             }
         }
     }
 
-    private func sectionHeader(_ t: String) -> some View {
-        Text(t.uppercased())
-            .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func save() {
-        let pet = Pet(name: name, type: type, breed: breed, birthDate: birthDate,
-                      gender: gender, weight: Double(weight) ?? 0, notes: notes.isEmpty ? nil : notes)
-        vm.addPet(pet)
-        vm.selectedPet = pet
-        vm.selectedTab = 2
-        vm.showAddFeeding = true
+    private func savePet() {
+        let w = Double(weight) ?? 0
+        let pet = Pet(
+            name: name, type: type, breed: breed,
+            birthDate: birthDate, gender: gender,
+            weight: w, photoName: nil, notes: notes.isEmpty ? nil : notes)
+        Task { try? await FirebasePetService.shared.addPet(pet) }
+        vm.pets.append(pet)
         dismiss()
     }
 }
@@ -330,202 +327,136 @@ struct PetDetailView: View {
     @EnvironmentObject var vm: AppViewModel
     @Environment(\.dismiss) var dismiss
     @State private var appeared = false
-    @Namespace private var ns
 
     var body: some View {
-        ZStack(alignment: .top) {
+        ZStack {
             PCMeshBackground()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 0) {
-                    detailHero
-                    statsStrip
-                    quickActions
-                    activeSchedules
-                    weightPreview
-                    Spacer().frame(height: 120)
-                }
-            }
-            .ignoresSafeArea(edges: .top)
+            VStack(spacing: 0) {
+                // Custom Nav bar with back button
+                HStack {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color.pcIndigo)
+                            .frame(width: 36, height: 36)
+                            .background(Color.pcIndigo.opacity(0.12))
+                            .clipShape(Circle())
+                    }
 
-            // Nav overlay
-            HStack {
-                Button { dismiss() } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                        .background(.white.opacity(0.20))
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(.white.opacity(0.30), lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-                Spacer()
-                Button {} label: {
-                    Image(systemName: "square.and.pencil")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                        .background(.white.opacity(0.20))
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(.white.opacity(0.30), lineWidth: 1))
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, PCSpace.lg)
-            .padding(.top, 56)
-        }
-        .navigationBarHidden(true)
-        .onAppear { withAnimation(.pcSpring.delay(0.1)) { appeared = true } }
-    }
-
-    // MARK: Hero
-    private var detailHero: some View {
-        ZStack(alignment: .bottom) {
-            // Gradient bg
-            LinearGradient(
-                colors: [Color(hex: "#312E81"), pet.type.accent, pet.type.accent.opacity(0.7)],
-                startPoint: .topLeading, endPoint: .bottomTrailing)
-                .frame(height: 300)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 0)
-                        .stroke(.white.opacity(0.08), lineWidth: 0))
-
-            // Decorative orbs
-            Circle().fill(.white.opacity(0.06)).frame(width: 180).offset(x: 100, y: -60)
-            Circle().fill(.white.opacity(0.04)).frame(width: 120).offset(x: -90, y: 20)
-
-            // Pet info
-            VStack(spacing: 14) {
-                // Avatar
-                ZStack {
-                    Circle()
-                        .fill(.white.opacity(0.18))
-                        .frame(width: 100, height: 100)
-                        .overlay(Circle().stroke(.white.opacity(0.35), lineWidth: 2))
-                        .shadow(color: .black.opacity(0.20), radius: 20, x: 0, y: 8)
-                    Text(pet.type.emoji).font(.system(size: 50))
-                }
-
-                VStack(spacing: 6) {
                     Text(pet.name)
                         .font(PCFont.title1(.black))
-                        .foregroundStyle(.white)
-                    Text("\(pet.breed) • \(pet.gender.symbol) \(pet.gender.rawValue)")
-                        .font(PCFont.subhead())
-                        .foregroundStyle(.white.opacity(0.75))
-                }
-            }
-            .padding(.bottom, 32)
-            .scaleEffect(appeared ? 1 : 0.9)
-            .opacity(appeared ? 1 : 0)
-        }
-    }
-
-    // MARK: Stats Strip
-    private var statsStrip: some View {
-        HStack(spacing: 0) {
-            ForEach([
-                ("Umur", pet.age),
-                ("Berat", String(format: "%.1f kg", pet.weight)),
-                ("Vaksin", "\(vm.vaccines(for: pet.id).count)")
-            ], id: \.0) { item in
-                VStack(spacing: 4) {
-                    Text(item.1)
-                        .font(PCFont.title3(.black))
                         .foregroundStyle(Color.pcText1)
-                    Text(item.0)
-                        .font(PCFont.micro())
-                        .foregroundStyle(Color.pcText2)
+                    Spacer()
                 }
-                .frame(maxWidth: .infinity)
-                if item.0 != "Vaksin" {
-                    Divider().frame(height: 30)
-                }
-            }
-        }
-        .padding(PCSpace.md)
-        .elevatedGlass(radius: PCRadius.xl)
-        .padding(.horizontal, PCSpace.lg)
-        .offset(y: -20)
-    }
-
-    // MARK: Quick Actions
-    private var quickActions: some View {
-        VStack(spacing: 12) {
-            PCSectionHeader(title: "Aksi Cepat")
                 .padding(.horizontal, PCSpace.lg)
-            HStack(spacing: 12) {
-                ForEach([
-                    ("💉","Vaksin", Color.pcOrange),
-                    ("🍖","Makan",  Color.pcGreen),
-                    ("💊","Obat",   Color.pcPurple),
-                    ("📋","Riwayat",Color.pcIndigo)
-                ], id: \.0) { item in
-                    VStack(spacing: 8) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(item.2.opacity(0.12))
-                                .frame(width: 50, height: 50)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .stroke(item.2.opacity(0.20), lineWidth: 1))
-                            Text(item.0).font(.system(size: 22))
+                .padding(.vertical, PCSpace.sm)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        // Hero
+                        VStack(spacing: 16) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.primaryGradient)
+                                    .frame(width: 100, height: 100)
+                                    .shadow(color: Color.pcIndigo.opacity(0.35), radius: 20, x: 0, y: 8)
+                                Text(pet.type.emoji).font(.system(size: 50))
+                            }
+                            VStack(spacing: 4) {
+                                Text(pet.name)
+                                    .font(PCFont.display(.black))
+                                    .foregroundStyle(Color.pcText1)
+                                Text(pet.breed)
+                                    .font(PCFont.subhead())
+                                    .foregroundStyle(Color.pcText2)
+                            }
                         }
-                        Text(item.1).font(PCFont.micro()).foregroundStyle(Color.pcText2)
+                        .padding(.top, PCSpace.md)
+
+                        // Info cards
+                        VStack(spacing: 12) {
+                            HStack(spacing: 12) {
+                                InfoCard(icon: "scalemass.fill", label: "Berat", value: String(format: "%.1f kg", pet.weight), color: .pcIndigo)
+                                InfoCard(icon: "heart.fill", label: "Status", value: "Sehat", color: .pcGreen)
+                            }
+                            HStack(spacing: 12) {
+                                InfoCard(icon: "calendar", label: "Umur", value: pet.age, color: .pcOrange)
+                                InfoCard(icon: pet.gender == .male ? "male.fill" : "female.fill", label: "Jenis Kelamin", value: pet.gender.rawValue, color: .pcPurple)
+                            }
+                        }
+                        .padding(.horizontal, PCSpace.lg)
+
+                        // Quick Actions
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Aksi Cepat")
+                                .font(PCFont.title3())
+                                .foregroundStyle(Color.pcText1)
+                            HStack(spacing: 12) {
+                                QuickActionButton(icon: "syringe.fill", label: "Vaksin", color: .pcOrange) { }
+                                QuickActionButton(icon: "fork.knife", label: "Makan", color: .pcGreen) { }
+                                QuickActionButton(icon: "pills.fill", label: "Obat", color: .pcPurple) { }
+                                QuickActionButton(icon: "heart.text.square.fill", label: "Kesehatan", color: .pcIndigo) { }
+                            }
+                        }
+                        .padding(.horizontal, PCSpace.lg)
+
+                        // Weight Chart
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Berat Badan")
+                                .font(PCFont.title3())
+                                .foregroundStyle(Color.pcText1)
+                            PCMiniBarChart(values: [26.5, 27.2, 27.3, 28.1, 27.8, 28.5])
+                        }
+                        .padding(.horizontal, PCSpace.lg)
+
+                        Spacer().frame(height: 100)
                     }
-                    .frame(maxWidth: .infinity)
                 }
             }
-            .padding(.horizontal, PCSpace.lg)
         }
-        .padding(.bottom, PCSpace.md)
+        .navigationBarHidden(true)
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 20)
+        .onAppear { withAnimation(.pcSpring) { appeared = true } }
     }
+}
 
-    // MARK: Active Schedules
-    private var activeSchedules: some View {
-        VStack(spacing: 12) {
-            PCSectionHeader(title: "Jadwal Aktif")
-                .padding(.horizontal, PCSpace.lg)
-            VStack(spacing: 8) {
-                ForEach(vm.vaccines(for: pet.id).filter { $0.status == .upcoming }.prefix(2)) { v in
-                    PCScheduleRow(icon: "💉", iconColor: .pcOrange,
-                                  title: v.name,
-                                  subtitle: v.nextDate?.relative ?? "—",
-                                  badge: v.status.rawValue, badgeColor: v.status.color)
-                    .padding(.horizontal, PCSpace.lg)
-                }
-                ForEach(vm.medications(for: pet.id).filter { $0.isActive }.prefix(2)) { m in
-                    PCScheduleRow(icon: "💊", iconColor: .pcPurple,
-                                  title: m.name, subtitle: m.dosage + " • " + m.frequency.rawValue,
-                                  badge: "Aktif", badgeColor: .pcPurple)
-                    .padding(.horizontal, PCSpace.lg)
-                }
+struct InfoCard: View {
+    let icon: String; let label: String; let value: String; let color: Color
+    var body: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle().fill(color.opacity(0.12)).frame(width: 44, height: 44)
+                Image(systemName: icon).font(.system(size: 18, weight: .semibold)).foregroundStyle(color)
             }
+            Text(label).font(PCFont.micro()).foregroundStyle(Color.pcText2)
+            Text(value).font(PCFont.subhead().weight(.bold)).foregroundStyle(Color.pcText1)
         }
-        .padding(.bottom, PCSpace.md)
+        .frame(maxWidth: .infinity)
+        .padding(PCSpace.md)
+        .liquidGlass(radius: PCRadius.lg)
     }
+}
 
-    // MARK: Weight mini chart
-    private var weightPreview: some View {
-        VStack(spacing: 12) {
-            PCSectionHeader(title: "Berat Badan", actionTitle: "Lihat Grafik")
-                .padding(.horizontal, PCSpace.lg)
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Sekarang").font(PCFont.caption()).foregroundStyle(Color.pcText2)
-                    Text(String(format: "%.1f kg", pet.weight))
-                        .font(PCFont.title2(.black)).foregroundStyle(Color.pcIndigo)
-                }
-                Spacer()
-                PCMiniBarChart(
-                    values: vm.weights(for: pet.id).map { $0.weight },
-                    color: .pcIndigo, height: 44)
+struct QuickActionButton: View {
+    let icon: String; let label: String; let color: Color; let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Circle()
+                    .fill(color.opacity(0.12))
+                    .frame(width: 48, height: 48)
+                    .overlay(Image(systemName: icon).font(.system(size: 20)).foregroundStyle(color))
+                Text(label).font(PCFont.micro()).foregroundStyle(Color.pcText2)
             }
-            .padding(PCSpace.md)
-            .elevatedGlass(radius: PCRadius.xl)
-            .padding(.horizontal, PCSpace.lg)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, PCSpace.sm)
+            .liquidGlass(radius: PCRadius.lg)
         }
+        .buttonStyle(.plain)
     }
 }
 

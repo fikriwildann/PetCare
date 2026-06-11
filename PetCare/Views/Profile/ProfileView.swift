@@ -8,10 +8,11 @@ import SwiftUI
 // ─────────────────────────────────────────
 struct ProfileView: View {
     @EnvironmentObject var vm: AppViewModel
-    @State private var darkMode = false
     @State private var notifEnabled = true
     @State private var appeared = false
     @State private var showEditProfile = false
+    @State private var showAboutPetCare = false
+    @State private var showRating = false
 
     var body: some View {
         ZStack {
@@ -36,18 +37,15 @@ struct ProfileView: View {
                         PCMenuRow(icon: "bell.fill", iconBg: Color.pcOrange,
                                   title: "Pengaturan Notifikasi",
                                   badge: "\(vm.unreadCount)") {}
-                        toggleRow
                     }
 
                     // Help & Info
                     menuSection(title: "Bantuan & Info") {
-                        PCMenuRow(icon: "questionmark.circle.fill", iconBg: Color.pcGreen,
-                                  title: "Bantuan & FAQ") {}
                         PCMenuRow(icon: "info.circle.fill", iconBg: Color.pcPurple,
                                   title: "Tentang PetCare",
-                                  subtitle: "Versi 1.0.0") {}
+                                  subtitle: "Versi 1.0.0") { showAboutPetCare = true }
                         PCMenuRow(icon: "star.fill", iconBg: Color.pcOrange,
-                                  title: "Beri Rating") {}
+                                  title: "Beri Rating") { showRating = true }
                     }
 
                     // Logout
@@ -71,6 +69,12 @@ struct ProfileView: View {
         .onAppear { withAnimation(.pcSpring) { appeared = true } }
         .sheet(isPresented: $showEditProfile) {
             EditProfileSheetView()
+        }
+        .sheet(isPresented: $showAboutPetCare) {
+            AboutPetCareView()
+        }
+        .sheet(isPresented: $showRating) {
+            RatingView().environmentObject(vm)
         }
     }
 
@@ -118,12 +122,6 @@ struct ProfileView: View {
         .padding(PCSpace.md)
         .liquidGlass(radius: PCRadius.xl)
         .padding(.horizontal, PCSpace.lg)
-    }
-
-    // MARK: Toggle row
-    private var toggleRow: some View {
-        PCToggleRow(icon: "moon.fill", iconBg: Color.pcIndigo.opacity(0.8),
-                    title: "Tampilan Gelap", isOn: $darkMode)
     }
 
     // MARK: Menu Section
