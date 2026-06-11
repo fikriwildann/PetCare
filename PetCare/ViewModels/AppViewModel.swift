@@ -94,7 +94,10 @@ final class AppViewModel: ObservableObject {
         withAnimation(.pcSpring) { feedings.append(f) }
         Task { try? await FirebaseScheduleService.shared.addFeeding(f) }
     }
-    func addHealthRecord(_ r: HealthRecord) { withAnimation(.pcSpring) { healthRecords.append(r) } }
+    func addHealthRecord(_ r: HealthRecord) {
+        withAnimation(.pcSpring) { healthRecords.append(r) }
+        Task { try? await FirebaseHealthRecordService.shared.addHealthRecord(r) }
+    }
 
     func toggleFeedingComplete(_ id: UUID) {
         if let i = feedings.firstIndex(where: { $0.id == id }) {
@@ -121,13 +124,15 @@ final class AppViewModel: ObservableObject {
             async let loadedFeedings = FirebaseScheduleService.shared.loadFeedings()
             async let loadedVaccines = FirebaseScheduleService.shared.loadVaccines()
             async let loadedMedications = FirebaseScheduleService.shared.loadMedications()
+            async let loadedHealthRecords = FirebaseHealthRecordService.shared.loadHealthRecords()
 
-            let (f, v, m) = try await (loadedFeedings, loadedVaccines, loadedMedications)
+            let (f, v, m, h) = try await (loadedFeedings, loadedVaccines, loadedMedications, loadedHealthRecords)
             await MainActor.run {
                 withAnimation(.pcSpring) {
                     feedings = f
                     vaccines = v
                     medications = m
+                    healthRecords = h
                 }
             }
         } catch {
@@ -156,12 +161,30 @@ final class AppViewModel: ObservableObject {
                     profileImageName: nil,
                     joinDate: Date()
                 )
+                PersistenceService.shared.save(true, key: StorageKey.authState)
                 withAnimation(.pcSpring) { isLoggedIn = true }
                 await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
             } catch let error as NSError {
                 authError = mapAuthError(error)
             }
+        }
+    }
+
+    func checkAuthState() {
+        if let user = Auth.auth().currentUser {
+            currentUser = AppUser(
+                id: UUID(),
+                name: user.displayName ?? user.email?.components(separatedBy: "@").first ?? "User",
+                email: user.email ?? "",
+                profileImageName: nil,
+                joinDate: Date()
+            )
+            Task {
+                await loadPetsFromFirestore()
+                await loadSchedulesFromFirestore()
+            }
+            isLoggedIn = true
         }
     }
 
@@ -204,6 +227,7 @@ final class AppViewModel: ObservableObject {
                     profileImageName: nil,
                     joinDate: Date()
                 )
+                PersistenceService.shared.save(true, key: StorageKey.authState)
                 withAnimation(.pcSpring) { isLoggedIn = true }
                 await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
@@ -249,6 +273,7 @@ final class AppViewModel: ObservableObject {
     func logout() {
         do {
             try Auth.auth().signOut()
+            PersistenceService.shared.delete(key: StorageKey.authState)
             withAnimation(.pcSpring) { isLoggedIn = false }
             currentUser = SampleData.user
         } catch {

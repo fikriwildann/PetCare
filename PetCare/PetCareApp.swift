@@ -16,6 +16,9 @@ struct PetCareApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(vm)
+                .onAppear {
+                    vm.checkAuthState()
+                }
         }
     }
 }

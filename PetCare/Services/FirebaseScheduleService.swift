@@ -3,6 +3,7 @@
 
 import Foundation
 import FirebaseFirestore
+import FirebaseAuth
 
 final class FirebaseScheduleService {
     static let shared = FirebaseScheduleService()
@@ -10,74 +11,96 @@ final class FirebaseScheduleService {
 
     private init() {}
 
+    private func userDocument() -> DocumentReference? {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            return nil
+        }
+        return db.collection("users").document(userId)
+    }
+
     // MARK: - Feedings
 
     func addFeeding(_ feeding: FeedingSchedule) async throws {
-        let doc = Firestore.firestore().collection("feedings").document(feeding.id.uuidString)
-        try await doc.setData(feeding.toDictionary)
+        guard let userDoc = userDocument() else { return }
+        var data = feeding.toDictionary
+        data["userId"] = Auth.auth().currentUser?.uid ?? ""
+        try await userDoc.collection("feedings").document(feeding.id.uuidString).setData(data)
     }
 
     func updateFeeding(_ feeding: FeedingSchedule) async throws {
-        let doc = Firestore.firestore().collection("feedings").document(feeding.id.uuidString)
-        try await doc.updateData(feeding.toDictionary)
+        guard let userDoc = userDocument() else { return }
+        var data = feeding.toDictionary
+        data["userId"] = Auth.auth().currentUser?.uid ?? ""
+        try await userDoc.collection("feedings").document(feeding.id.uuidString).updateData(data)
     }
 
     func deleteFeeding(id: UUID) async throws {
-        let doc = Firestore.firestore().collection("feedings").document(id.uuidString)
-        try await doc.delete()
+        guard let userDoc = userDocument() else { return }
+        try await userDoc.collection("feedings").document(id.uuidString).delete()
     }
 
     func toggleFeedingComplete(id: UUID, isCompleted: Bool) async throws {
-        let doc = Firestore.firestore().collection("feedings").document(id.uuidString)
-        try await doc.updateData(["isCompleted": isCompleted])
+        guard let userDoc = userDocument() else { return }
+        try await userDoc.collection("feedings").document(id.uuidString).updateData(["isCompleted": isCompleted])
     }
 
     func loadFeedings() async throws -> [FeedingSchedule] {
-        let snapshot = try await Firestore.firestore().collection("feedings").getDocuments()
+        guard let userDoc = userDocument() else { return [] }
+        let snapshot = try await userDoc.collection("feedings").getDocuments()
         return snapshot.documents.compactMap { FeedingSchedule.from(dictionary: $0.data()) }
     }
 
     // MARK: - Vaccines
 
     func addVaccine(_ vaccine: Vaccine) async throws {
-        let doc = Firestore.firestore().collection("vaccines").document(vaccine.id.uuidString)
-        try await doc.setData(vaccine.toDictionary)
+        guard let userDoc = userDocument() else { return }
+        var data = vaccine.toDictionary
+        data["userId"] = Auth.auth().currentUser?.uid ?? ""
+        try await userDoc.collection("vaccines").document(vaccine.id.uuidString).setData(data)
     }
 
     func updateVaccine(_ vaccine: Vaccine) async throws {
-        let doc = Firestore.firestore().collection("vaccines").document(vaccine.id.uuidString)
-        try await doc.updateData(vaccine.toDictionary)
+        guard let userDoc = userDocument() else { return }
+        var data = vaccine.toDictionary
+        data["userId"] = Auth.auth().currentUser?.uid ?? ""
+        try await userDoc.collection("vaccines").document(vaccine.id.uuidString).updateData(data)
     }
 
     func deleteVaccine(id: UUID) async throws {
-        let doc = Firestore.firestore().collection("vaccines").document(id.uuidString)
-        try await doc.delete()
+        guard let userDoc = userDocument() else { return }
+        try await userDoc.collection("vaccines").document(id.uuidString).delete()
     }
 
     func loadVaccines() async throws -> [Vaccine] {
-        let snapshot = try await Firestore.firestore().collection("vaccines").getDocuments()
+        guard let userDoc = userDocument() else { return [] }
+        let snapshot = try await userDoc.collection("vaccines").getDocuments()
         return snapshot.documents.compactMap { Vaccine.from(dictionary: $0.data()) }
     }
 
     // MARK: - Medications
 
     func addMedication(_ medication: Medication) async throws {
-        let doc = Firestore.firestore().collection("medications").document(medication.id.uuidString)
-        try await doc.setData(medication.toDictionary)
+        guard let userDoc = userDocument() else { return }
+        var data = medication.toDictionary
+        data["userId"] = Auth.auth().currentUser?.uid ?? ""
+        try await userDoc.collection("medications").document(medication.id.uuidString).setData(data)
     }
 
     func updateMedication(_ medication: Medication) async throws {
-        let doc = Firestore.firestore().collection("medications").document(medication.id.uuidString)
-        try await doc.updateData(medication.toDictionary)
+        guard let userDoc = userDocument() else { return }
+        var data = medication.toDictionary
+        data["userId"] = Auth.auth().currentUser?.uid ?? ""
+        try await userDoc.collection("medications").document(medication.id.uuidString).updateData(data)
     }
 
     func deleteMedication(id: UUID) async throws {
-        let doc = Firestore.firestore().collection("medications").document(id.uuidString)
-        try await doc.delete()
+        guard let userDoc = userDocument() else { return }
+        try await userDoc.collection("medications").document(id.uuidString).delete()
     }
 
     func loadMedications() async throws -> [Medication] {
-        let snapshot = try await Firestore.firestore().collection("medications").getDocuments()
+        guard let userDoc = userDocument() else { return [] }
+        let snapshot = try await userDoc.collection("medications").getDocuments()
         return snapshot.documents.compactMap { Medication.from(dictionary: $0.data()) }
     }
 }

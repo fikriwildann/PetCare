@@ -54,14 +54,6 @@ struct HomeView: View {
             Spacer()
             HStack(spacing: 10) {
                 PCIconNavButton(icon: "bell.fill", badge: vm.unreadCount) {}
-                // Avatar
-                ZStack {
-                    Circle()
-                        .fill(Color.primaryGradient)
-                        .frame(width: 40, height: 40)
-                    Text("🧑").font(.system(size: 20))
-                }
-                .shadow(color: Color.pcIndigo.opacity(0.35), radius: 8, x: 0, y: 3)
             }
         }
         .padding(.horizontal, PCSpace.lg)
@@ -156,9 +148,21 @@ struct HomeView: View {
     // MARK: Pets Section
     private var petsSection: some View {
         VStack(spacing: 0) {
-            PCSectionHeader(title: "Hewan Saya", actionTitle: "Lihat Semua")
-                .padding(.horizontal, PCSpace.lg)
-                .padding(.bottom, PCSpace.sm)
+            HStack {
+                Text("Hewan Saya")
+                    .font(PCFont.title3())
+                    .foregroundStyle(Color.pcText1)
+                Spacer()
+                NavigationLink {
+                    PetsListView()
+                } label: {
+                    Text("Lihat Semua")
+                        .font(PCFont.subhead().weight(.semibold))
+                        .foregroundStyle(Color.pcIndigo)
+                }
+            }
+            .padding(.horizontal, PCSpace.lg)
+            .padding(.bottom, PCSpace.sm)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -201,8 +205,20 @@ struct HomeView: View {
     // MARK: Schedule Section
     private var scheduleSection: some View {
         VStack(spacing: 12) {
-            PCSectionHeader(title: "Jadwal Terdekat", actionTitle: "Semua")
-                .padding(.horizontal, PCSpace.lg)
+            HStack {
+                Text("Jadwal Terdekat")
+                    .font(PCFont.title3())
+                    .foregroundStyle(Color.pcText1)
+                Spacer()
+                NavigationLink {
+                    ScheduleView()
+                } label: {
+                    Text("Semua")
+                        .font(PCFont.subhead().weight(.semibold))
+                        .foregroundStyle(Color.pcIndigo)
+                }
+            }
+            .padding(.horizontal, PCSpace.lg)
 
             VStack(spacing: 8) {
                 ForEach(vm.upcomingVaccines.prefix(2)) { v in
@@ -231,8 +247,20 @@ struct HomeView: View {
     // MARK: Health Summary
     private var healthSummary: some View {
         VStack(spacing: 12) {
-            PCSectionHeader(title: "Ringkasan Kesehatan", actionTitle: "Detail")
-                .padding(.horizontal, PCSpace.lg)
+            HStack {
+                Text("Ringkasan Kesehatan")
+                    .font(PCFont.title3())
+                    .foregroundStyle(Color.pcText1)
+                Spacer()
+                NavigationLink {
+                    HealthView()
+                } label: {
+                    Text("Detail")
+                        .font(PCFont.subhead().weight(.semibold))
+                        .foregroundStyle(Color.pcIndigo)
+                }
+            }
+            .padding(.horizontal, PCSpace.lg)
 
             VStack(spacing: 0) {
                 HealthSummaryRow(

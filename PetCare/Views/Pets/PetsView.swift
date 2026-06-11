@@ -330,6 +330,7 @@ struct PetDetailView: View {
     @EnvironmentObject var vm: AppViewModel
     @Environment(\.dismiss) var dismiss
     @State private var appeared = false
+    @State private var showEditSheet = false
     @Namespace private var ns
 
     var body: some View {
@@ -361,7 +362,7 @@ struct PetDetailView: View {
                 }
                 .buttonStyle(.plain)
                 Spacer()
-                Button {} label: {
+                Button { showEditSheet = true } label: {
                     Image(systemName: "square.and.pencil")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
@@ -377,6 +378,9 @@ struct PetDetailView: View {
         }
         .navigationBarHidden(true)
         .onAppear { withAnimation(.pcSpring.delay(0.1)) { appeared = true } }
+        .sheet(isPresented: $showEditSheet) {
+            EditPetView(pet: pet)
+        }
     }
 
     // MARK: Hero

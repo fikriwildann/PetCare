@@ -41,6 +41,9 @@ struct HealthView: View {
             }
         }
         .onAppear { withAnimation(.pcSpring) { appeared = true } }
+        .sheet(isPresented: $vm.showAddHealthRecord) {
+            AddHealthRecordView()
+        }
     }
 }
 

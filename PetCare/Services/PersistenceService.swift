@@ -53,4 +53,5 @@ enum StorageKey {
     static let weightRecords = "weight_records"
     static let notifications = "notifications"
     static let user          = "user"
+    static let authState     = "auth_state"
 }
