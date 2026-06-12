@@ -163,21 +163,6 @@ struct HomeView: View {
             }
             .padding(.horizontal, PCSpace.lg)
             .padding(.bottom, PCSpace.sm)
-            HStack {
-                Text("Hewan Saya")
-                    .font(PCFont.title3())
-                    .foregroundStyle(Color.pcText1)
-                Spacer()
-                NavigationLink {
-                    PetsListView()
-                } label: {
-                    Text("Lihat Semua")
-                        .font(PCFont.subhead().weight(.semibold))
-                        .foregroundStyle(Color.pcIndigo)
-                }
-            }
-            .padding(.horizontal, PCSpace.lg)
-            .padding(.bottom, PCSpace.sm)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -234,20 +219,6 @@ struct HomeView: View {
                 }
             }
             .padding(.horizontal, PCSpace.lg)
-            HStack {
-                Text("Jadwal Terdekat")
-                    .font(PCFont.title3())
-                    .foregroundStyle(Color.pcText1)
-                Spacer()
-                NavigationLink {
-                    ScheduleView()
-                } label: {
-                    Text("Semua")
-                        .font(PCFont.subhead().weight(.semibold))
-                        .foregroundStyle(Color.pcIndigo)
-                }
-            }
-            .padding(.horizontal, PCSpace.lg)
 
             VStack(spacing: 8) {
                 ForEach(vm.upcomingVaccines.prefix(2)) { v in
@@ -276,20 +247,6 @@ struct HomeView: View {
     // MARK: Health Summary
     private var healthSummary: some View {
         VStack(spacing: 12) {
-            HStack {
-                Text("Ringkasan Kesehatan")
-                    .font(PCFont.title3())
-                    .foregroundStyle(Color.pcText1)
-                Spacer()
-                NavigationLink {
-                    HealthView()
-                } label: {
-                    Text("Detail")
-                        .font(PCFont.subhead().weight(.semibold))
-                        .foregroundStyle(Color.pcIndigo)
-                }
-            }
-            .padding(.horizontal, PCSpace.lg)
             HStack {
                 Text("Ringkasan Kesehatan")
                     .font(PCFont.title3())

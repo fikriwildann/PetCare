@@ -31,7 +31,7 @@ struct HealthView: View {
                     switch segment {
                     case 0: VaccineListView()
                     case 1: MedicationListView()
-                    case 2: HealthHistoryView(pet: vm.selectedPet ?? SampleData.buddy)
+                    case 2: HealthHistoryView()
                     case 3: WeightChartView(pet: vm.selectedPet ?? SampleData.buddy)
                     default: EmptyView()
                     }
@@ -228,25 +228,53 @@ struct MedicationCard: View {
 // MARK: HealthHistoryView
 // ─────────────────────────────────────────
 struct HealthHistoryView: View {
-    let pet: Pet
     @EnvironmentObject var vm: AppViewModel
     @State private var expanded: UUID? = nil
+    @State private var selectedPetId: UUID? = nil
 
-    private var records: [HealthRecord] { vm.healthRecords(for: pet.id) }
+    private var filteredRecords: [HealthRecord] {
+        if let pid = selectedPetId {
+            return vm.healthRecords.filter { $0.petId == pid }
+        }
+        return vm.healthRecords
+    }
+
+    private var selectedPetName: String {
+        if let pid = selectedPetId, let pet = vm.pets.first(where: { $0.id == pid }) {
+            return pet.name
+        }
+        return "Semua Hewan"
+    }
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
-                    ForEach(records.indices, id: \.self) { i in
-                        TimelineItem(record: records[i],
-                                     isLast: i == records.count - 1,
+                    // Pet filter pills
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            FilterPill(label: "Semua", active: selectedPetId == nil) {
+                                withAnimation(.pcSpring) { selectedPetId = nil }
+                            }
+                            ForEach(vm.pets) { p in
+                                FilterPill(label: "\(p.type.emoji) \(p.name)", active: selectedPetId == p.id) {
+                                    withAnimation(.pcSpring) { selectedPetId = p.id }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, PCSpace.lg)
+                    }
+                    .padding(.bottom, PCSpace.sm)
+
+                    ForEach(filteredRecords.indices, id: \.self) { i in
+                        TimelineItem(record: filteredRecords[i],
+                                     isLast: i == filteredRecords.count - 1,
                                      expanded: $expanded)
                         .padding(.horizontal, PCSpace.lg)
                     }
-                    if records.isEmpty {
+                    if filteredRecords.isEmpty {
                         PCEmptyState(icon: "clipboard", title: "Belum Ada Riwayat",
-                                     message: "Catat pemeriksaan pertama \(pet.name)")
+                                     message: selectedPetId == nil ? "Catat pemeriksaan kesehatan pertama" : "Belum ada riwayat untuk \(selectedPetName)")
                     }
                     Spacer().frame(height: 120)
                 }
