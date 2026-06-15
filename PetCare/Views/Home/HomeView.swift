@@ -246,7 +246,13 @@ struct HomeView: View {
 
     // MARK: Health Summary
     private var healthSummary: some View {
-        VStack(spacing: 12) {
+        let currentPet = vm.selectedPet ?? vm.pets.first
+        let currentPetId = currentPet?.id ?? UUID()
+        let weightRecords = vm.weights(for: currentPetId)
+        let latestWeight = weightRecords.last?.weight ?? currentPet?.weight ?? 0
+        let hasPets = !vm.pets.isEmpty
+
+        return VStack(spacing: 12) {
             HStack {
                 Text("Ringkasan Kesehatan")
                     .font(PCFont.title3())
@@ -266,10 +272,12 @@ struct HomeView: View {
                 HealthSummaryRow(
                     icon: "scalemass.fill", iconBg: Color.pcIndigo.opacity(0.12),
                     iconFg: .pcIndigo,
-                    title: "Berat \(vm.pets.first?.name ?? "—")",
-                    value: String(format: "%.1f kg", vm.pets.first?.weight ?? 0),
+                    title: "Berat \(currentPet?.name ?? "—")",
+                    value: hasPets ? String(format: "%.1f kg", latestWeight) : "Belum ada",
                     trailing: AnyView(
-                        PCMiniBarChart(values: [26.5,27.2,27.3,28.1,27.8,28.5])
+                        hasPets
+                            ? AnyView(PCMiniBarChart(values: weightRecords.map { $0.weight }))
+                            : AnyView(EmptyView())
                     ))
                 Divider().padding(.leading, 58)
                 HealthSummaryRow(

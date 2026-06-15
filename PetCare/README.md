@@ -131,7 +131,7 @@ Di `Signing & Capabilities`, tambahkan:
 | 10 | Jadwal Makan | `ScheduleView.swift` |
 | 11 | Manajemen Obat | `HealthView.swift` |
 | 12 | Riwayat Kesehatan | `HealthView.swift` |
-| 13 | Grafik Berat Badan | `HealthView.swift` |
+| 13 | c | `HealthView.swift` |
 | 14 | Notifikasi | `ProfileView.swift` |
 | 15 | Profil | `ProfileView.swift` |
 | + | Edit Hewan | `EditViews.swift` |

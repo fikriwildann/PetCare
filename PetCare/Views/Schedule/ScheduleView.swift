@@ -37,9 +37,32 @@ struct ScheduleView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 20) {
-                        if segment == 0 || segment == 1 { feedingSection }
-                        if segment == 0 || segment == 2 { vaccineSection }
-                        if segment == 0 || segment == 3 { medicationSection }
+                        if segment == 0 {
+                            if vm.feedings.isEmpty && vm.vaccines.isEmpty && vm.medications.isEmpty {
+                                PCEmptyState(icon: "calendar", title: "Belum Ada Jadwal",
+                                             message: "Tambahkan jadwal makan, vaksin, atau obat untuk hewan peliharaan Anda")
+                                    .padding(.top, PCSpace.xxxl)
+                            } else {
+                                if !vm.feedings.isEmpty { feedingSection }
+                                if !vm.vaccines.isEmpty { vaccineSection }
+                                if !vm.activeMedications.isEmpty { medicationSection }
+                            }
+                        } else if segment == 1 {
+                            if vm.feedings.isEmpty {
+                                PCEmptyState(icon: "fork.knife", title: "Belum Ada Jadwal Makan",
+                                             message: "Tambah jadwal makan untuk hewan peliharaan Anda")
+                            } else { feedingSection }
+                        } else if segment == 2 {
+                            if vm.vaccines.isEmpty {
+                                PCEmptyState(icon: "syringe.fill", title: "Belum Ada Jadwal Vaksin",
+                                             message: "Tambah jadwal vaksin untuk hewan peliharaan Anda")
+                            } else { vaccineSection }
+                        } else if segment == 3 {
+                            if vm.activeMedications.isEmpty {
+                                PCEmptyState(icon: "pills.fill", title: "Belum Ada Jadwal Obat",
+                                             message: "Tambah jadwal obat untuk hewan peliharaan Anda")
+                            } else { medicationSection }
+                        }
                         Spacer().frame(height: 100)
                     }
                     .padding(.top, PCSpace.sm)
@@ -186,7 +209,7 @@ struct VaccineScheduleRow: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("\(vaccine.name) — \(petName)")
                     .font(PCFont.subhead().weight(.semibold)).foregroundStyle(Color.pcText1)
-                Text(vaccine.nextDate?.relative ?? vaccine.date.shortDate)
+                Text(vaccine.status == .done ? vaccine.date.shortDate : (vaccine.nextDate?.relative ?? vaccine.date.shortDate))
                     .font(PCFont.caption()).foregroundStyle(Color.pcText2)
             }
             Spacer()

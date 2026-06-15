@@ -345,6 +345,83 @@ struct AddHealthRecordView: View {
 }
 
 // ─────────────────────────────────────────
+// MARK: AddWeightRecordView
+// ─────────────────────────────────────────
+struct AddWeightRecordView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var vm: AppViewModel
+
+    @State private var selectedPetId: UUID?
+    @State private var date   = Date()
+    @State private var weight = ""
+    @State private var notes  = ""
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                PCMeshBackground()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        Spacer().frame(height: 4)
+
+                        formCard {
+                            sectionLabel("Pilih Hewan")
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(vm.pets) { p in
+                                        PetPickerChip(pet: p, selected: selectedPetId == p.id) {
+                                            withAnimation(.pcSpring) { selectedPetId = p.id }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Detail Penimbangan")
+                            dateRow("Tanggal Penimbangan", selection: $date)
+                            PCTextField(label: "Berat (kg)", placeholder: "Contoh: 5.2", text: $weight)
+                                .keyboardType(.decimalPad)
+                        }
+
+                        formCard {
+                            sectionLabel("Catatan (Opsional)")
+                            noteEditor(text: $notes)
+                        }
+
+                        PCPrimaryButton("Simpan", icon: "checkmark") { save() }
+                            .padding(.horizontal, PCSpace.lg)
+                            .disabled(weight.isEmpty || selectedPetId == nil)
+                            .opacity(weight.isEmpty || selectedPetId == nil ? 0.5 : 1)
+
+                        Spacer().frame(height: 40)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") { dismiss() }.foregroundStyle(Color.pcIndigo)
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("Tambah Berat").font(PCFont.headline()).foregroundStyle(Color.pcText1)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let petId = selectedPetId,
+              let w = Double(weight.replacingOccurrences(of: ",", with: "."))
+        else { return }
+        let r = WeightRecord(petId: petId, date: date, weight: w,
+                             notes: notes.isEmpty ? nil : notes)
+        dismiss()
+        vm.addWeightRecord(r)
+    }
+}
+
+// ─────────────────────────────────────────
 // MARK: AddFeedingView
 // ─────────────────────────────────────────
 struct AddFeedingView: View {

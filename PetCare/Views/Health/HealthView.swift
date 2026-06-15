@@ -9,7 +9,6 @@ import Charts
 // ─────────────────────────────────────────
 struct HealthView: View {
     @EnvironmentObject var vm: AppViewModel
-    @State private var segment = 0
     @State private var appeared = false
 
     var body: some View {
@@ -24,25 +23,59 @@ struct HealthView: View {
                 }
                 .padding(.horizontal, PCSpace.lg).padding(.vertical, PCSpace.sm)
 
-                PCSegmentControl(options: ["Vaksin","Obat","Riwayat","Berat"], selected: $segment)
+                PCSegmentControl(options: ["Vaksin","Obat","Riwayat","Berat"], selected: $vm.selectedHealthSegment)
                     .padding(.bottom, PCSpace.sm)
 
                 Group {
-                    switch segment {
-                    case 0: VaccineListView()
-                    case 1: MedicationListView()
+                    switch vm.selectedHealthSegment {
+                    case 0:
+                        if vm.vaccines.isEmpty {
+                            PCEmptyState(icon: "syringe.fill", title: "Belum Ada Vaksin",
+                                        message: "Tambah jadwal vaksin untuk hewan peliharaan Anda")
+                        } else {
+                            VaccineListView()
+                        }
+                    case 1:
+                        if vm.medications.isEmpty {
+                            PCEmptyState(icon: "pills.fill", title: "Belum Ada Obat",
+                                        message: "Tambah jadwal obat untuk hewan peliharaan Anda")
+                        } else {
+                            MedicationListView()
+                        }
                     case 2: HealthHistoryView()
-                    case 3: WeightChartView(pet: vm.selectedPet ?? SampleData.buddy)
+                    case 3:
+                        if let pet = vm.selectedPet ?? vm.pets.first {
+                            WeightChartView(pet: pet)
+                        } else {
+                            PCEmptyState(icon: "scalemass", title: "Belum Ada Data",
+                                        message: "Tambahkan hewan terlebih dahulu untuk melihat berat")
+                        }
                     default: EmptyView()
                     }
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
-                .animation(.pcSpring, value: segment)
+                .animation(.pcSpring, value: vm.selectedHealthSegment)
             }
         }
-        .onAppear { withAnimation(.pcSpring) { appeared = true } }
+        .onAppear {
+            withAnimation(.pcSpring) { appeared = true }
+            if vm.navigateToWeightChart {
+                vm.selectedHealthSegment = 3
+                vm.navigateToWeightChart = false
+            }
+        }
         .sheet(isPresented: $vm.showAddHealthRecord) {
             AddHealthRecordView()
+        }
+        .sheet(isPresented: $vm.showAddWeight) {
+            AddWeightRecordView()
+        }
+        .overlay(alignment: .bottomTrailing) {
+            if vm.selectedHealthSegment == 3 {
+                PCFAB(icon: "plus") { vm.showAddWeight = true }
+                    .padding(.trailing, PCSpace.lg)
+                    .padding(.bottom, 100)
+            }
         }
     }
 }
@@ -474,32 +507,58 @@ struct WeightChartView: View {
                 }
 
                 // History table
-                VStack(spacing: 0) {
-                    Text("Riwayat Penimbangan")
-                        .font(PCFont.subhead().weight(.bold)).foregroundStyle(Color.pcText1)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.bottom, 12)
+                if !records.isEmpty {
+                    VStack(spacing: 0) {
+                        Text("Riwayat Penimbangan")
+                            .font(PCFont.subhead().weight(.bold)).foregroundStyle(Color.pcText1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.bottom, 12)
 
-                    ForEach(records.reversed()) { r in
-                        HStack {
-                            Text(r.date.monthYear)
-                                .font(PCFont.subhead()).foregroundStyle(Color.pcText2)
-                            Spacer()
-                            Text(String(format: "%.1f kg", r.weight))
-                                .font(PCFont.subhead().weight(.bold)).foregroundStyle(Color.pcText1)
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Color.pcGreen)
-                        }
-                        .padding(.vertical, 10)
-                        if r.id != records.first?.id {
-                            Divider()
+                        ForEach(Array(records.enumerated()), id: \.element.id) { idx, r in
+                            let sorted = records.sorted { $0.date < $1.date }
+                            let prev = idx > 0 ? sorted[idx - 1].weight : r.weight
+                            let diff = r.weight - prev
+                            let trendColor: Color = diff > 0 ? .pcGreen : (diff < 0 ? .pcRed : .pcText3)
+                            let trendIcon = diff > 0 ? "arrow.up.right" : (diff < 0 ? "arrow.down.right" : "minus")
+
+                            HStack {
+                                Text(r.date.monthYear)
+                                    .font(PCFont.subhead()).foregroundStyle(Color.pcText2)
+                                Spacer()
+                                Text(String(format: "%.1f kg", r.weight))
+                                    .font(PCFont.subhead().weight(.bold)).foregroundStyle(Color.pcText1)
+                                if diff != 0 {
+                                    HStack(spacing: 2) {
+                                        Image(systemName: trendIcon)
+                                            .font(.system(size: 10, weight: .bold))
+                                        Text(String(format: "%.1f", abs(diff)))
+                                            .font(PCFont.micro())
+                                    }
+                                    .foregroundStyle(trendColor)
+                                }
+                            }
+                            .padding(.vertical, 10)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    Task { try? await FirebaseWeightService.shared.deleteWeight(id: r.id) }
+                                    withAnimation(.pcSpring) {
+                                        if let i = vm.weightRecords.firstIndex(where: { $0.id == r.id }) {
+                                            vm.weightRecords.remove(at: i)
+                                        }
+                                    }
+                                } label: {
+                                    Label("Hapus", systemImage: "trash")
+                                }
+                            }
+                            if idx < records.count - 1 {
+                                Divider()
+                            }
                         }
                     }
+                    .padding(PCSpace.lg)
+                    .elevatedGlass(radius: PCRadius.xxl)
+                    .padding(.horizontal, PCSpace.lg)
                 }
-                .padding(PCSpace.lg)
-                .elevatedGlass(radius: PCRadius.xxl)
-                .padding(.horizontal, PCSpace.lg)
 
                 Spacer().frame(height: 120)
             }

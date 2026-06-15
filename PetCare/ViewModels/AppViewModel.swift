@@ -16,34 +16,37 @@ final class AppViewModel: ObservableObject {
     @Published var authError: String?
 
     // MARK: Pets
-    @Published var pets: [Pet] = SampleData.pets
-    @Published var selectedPet: Pet? = SampleData.pets.first
+    @Published var pets: [Pet] = []
+    @Published var selectedPet: Pet? = nil
 
     // MARK: Vaccines
-    @Published var vaccines: [Vaccine] = SampleData.vaccines
+    @Published var vaccines: [Vaccine] = []
 
     // MARK: Medications
-    @Published var medications: [Medication] = SampleData.medications
+    @Published var medications: [Medication] = []
 
     // MARK: Feedings
-    @Published var feedings: [FeedingSchedule] = SampleData.feedings
+    @Published var feedings: [FeedingSchedule] = []
 
     // MARK: Health Records
-    @Published var healthRecords: [HealthRecord] = SampleData.healthRecords
+    @Published var healthRecords: [HealthRecord] = []
 
     // MARK: Weight Records
-    @Published var weightRecords: [WeightRecord] = SampleData.weights(for: SampleData.buddy.id)
+    @Published var weightRecords: [WeightRecord] = []
 
     // MARK: Notifications
-    @Published var notifications: [AppNotification] = SampleData.notifications
+    @Published var notifications: [AppNotification] = []
 
     // MARK: UI State
     @Published var selectedTab: Int = 0
+    @Published var selectedHealthSegment: Int = 0
+    @Published var navigateToWeightChart: Bool = false
     @Published var showAddPet: Bool = false
     @Published var showAddVaccine: Bool = false
     @Published var showAddMedication: Bool = false
     @Published var showAddFeeding: Bool = false
     @Published var showAddHealthRecord: Bool = false
+    @Published var showAddWeight: Bool = false
 
     // MARK: Computed
 
@@ -72,8 +75,25 @@ final class AppViewModel: ObservableObject {
         Task { try? await FirebasePetService.shared.addPet(pet) }
     }
     func deletePet(_ pet: Pet) {
-        withAnimation(.pcSpring) { pets.removeAll { $0.id == pet.id } }
-        Task { try? await FirebasePetService.shared.deletePet(id: pet.id) }
+        withAnimation(.pcSpring) {
+            pets.removeAll { $0.id == pet.id }
+            feedings.removeAll { $0.petId == pet.id }
+            vaccines.removeAll { $0.petId == pet.id }
+            medications.removeAll { $0.petId == pet.id }
+            healthRecords.removeAll { $0.petId == pet.id }
+            weightRecords.removeAll { $0.petId == pet.id }
+            if selectedPet?.id == pet.id {
+                selectedPet = pets.first
+            }
+        }
+        Task {
+            try? await FirebaseScheduleService.shared.deleteAllFeedings(for: pet.id)
+            try? await FirebaseScheduleService.shared.deleteAllVaccines(for: pet.id)
+            try? await FirebaseScheduleService.shared.deleteAllMedications(for: pet.id)
+            try? await FirebaseHealthRecordService.shared.deleteAllHealthRecords(for: pet.id)
+            try? await FirebaseWeightService.shared.deleteAllWeights(for: pet.id)
+            try? await FirebasePetService.shared.deletePet(id: pet.id)
+        }
     }
     func updatePet(_ pet: Pet) {
         if let i = pets.firstIndex(where: { $0.id == pet.id }) {
@@ -97,6 +117,10 @@ final class AppViewModel: ObservableObject {
     func addHealthRecord(_ r: HealthRecord) {
         withAnimation(.pcSpring) { healthRecords.append(r) }
         Task { try? await FirebaseHealthRecordService.shared.addHealthRecord(r) }
+    }
+    func addWeightRecord(_ r: WeightRecord) {
+        withAnimation(.pcSpring) { weightRecords.append(r) }
+        Task { try? await FirebaseWeightService.shared.addWeight(r) }
     }
 
     func toggleFeedingComplete(_ id: UUID) {
@@ -125,14 +149,16 @@ final class AppViewModel: ObservableObject {
             async let loadedVaccines = FirebaseScheduleService.shared.loadVaccines()
             async let loadedMedications = FirebaseScheduleService.shared.loadMedications()
             async let loadedHealthRecords = FirebaseHealthRecordService.shared.loadHealthRecords()
+            async let loadedWeights = FirebaseWeightService.shared.loadWeights()
 
-            let (f, v, m, h) = try await (loadedFeedings, loadedVaccines, loadedMedications, loadedHealthRecords)
+            let (f, v, m, h, w) = try await (loadedFeedings, loadedVaccines, loadedMedications, loadedHealthRecords, loadedWeights)
             await MainActor.run {
                 withAnimation(.pcSpring) {
                     feedings = f
                     vaccines = v
                     medications = m
                     healthRecords = h
+                    weightRecords = w
                 }
             }
         } catch {
@@ -185,6 +211,7 @@ final class AppViewModel: ObservableObject {
                 await loadSchedulesFromFirestore()
             }
             isLoggedIn = true
+            showOnboarding = false
         }
     }
 

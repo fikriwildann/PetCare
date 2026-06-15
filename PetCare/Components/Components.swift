@@ -381,6 +381,7 @@ struct PCEmptyState: View {
 
     var body: some View {
         VStack(spacing: 16) {
+            Spacer().frame(height: 40)
             Image(systemName: icon)
                 .font(.system(size: 48, weight: .thin))
                 .foregroundStyle(Color.pcText3)
@@ -396,9 +397,9 @@ struct PCEmptyState: View {
                 PCPrimaryButton(actionTitle, icon: "plus", action: action)
                     .frame(width: 200)
             }
+            Spacer().frame(height: 40)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, PCSpace.xxxl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 

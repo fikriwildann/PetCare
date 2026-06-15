@@ -35,6 +35,15 @@ final class FirebaseHealthRecordService {
         try await userDoc.collection("healthRecords").document(id.uuidString).delete()
     }
 
+    func deleteAllHealthRecords(for petId: UUID) async throws {
+        guard let userDoc = userDocument() else { return }
+        let snapshot = try await userDoc.collection("healthRecords")
+            .whereField("petId", isEqualTo: petId.uuidString).getDocuments()
+        let batch = db.batch()
+        for doc in snapshot.documents { batch.deleteDocument(doc.reference) }
+        try await batch.commit()
+    }
+
     func loadHealthRecords() async throws -> [HealthRecord] {
         guard let userDoc = userDocument() else { return [] }
         let snapshot = try await userDoc.collection("healthRecords").getDocuments()

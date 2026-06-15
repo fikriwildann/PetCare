@@ -100,6 +100,11 @@ struct PetsListView: View {
 struct PetListRow: View {
     let pet: Pet
     let namespace: Namespace.ID
+    @EnvironmentObject var vm: AppViewModel
+
+    private var latestWeight: Double {
+        vm.weights(for: pet.id).last?.weight ?? pet.weight
+    }
 
     var body: some View {
         HStack(spacing: 16) {
@@ -117,7 +122,7 @@ struct PetListRow: View {
                     .font(PCFont.caption())
                     .foregroundStyle(Color.pcText2)
                 HStack(spacing: 6) {
-                    PCBadge(text: String(format: "%.1f kg", pet.weight),
+                    PCBadge(text: String(format: "%.1f kg", latestWeight),
                             color: pet.type.accent, small: true)
                     PCBadge(text: "Sehat", color: .pcGreen, small: true)
                 }
@@ -427,11 +432,15 @@ struct PetDetailView: View {
     }
 
     // MARK: Stats Strip
+    private var latestWeight: Double {
+        vm.weights(for: pet.id).last?.weight ?? pet.weight
+    }
+
     private var statsStrip: some View {
         HStack(spacing: 0) {
             ForEach([
                 ("Umur", pet.age),
-                ("Berat", String(format: "%.1f kg", pet.weight)),
+                ("Berat", String(format: "%.1f kg", latestWeight)),
                 ("Vaksin", "\(vm.vaccines(for: pet.id).count)")
             ], id: \.0) { item in
                 VStack(spacing: 4) {
@@ -460,30 +469,44 @@ struct PetDetailView: View {
             PCSectionHeader(title: "Aksi Cepat")
                 .padding(.horizontal, PCSpace.lg)
             HStack(spacing: 12) {
-                ForEach([
-                    ("💉","Vaksin", Color.pcOrange),
-                    ("🍖","Makan",  Color.pcGreen),
-                    ("💊","Obat",   Color.pcPurple),
-                    ("📋","Riwayat",Color.pcIndigo)
-                ], id: \.0) { item in
-                    VStack(spacing: 8) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(item.2.opacity(0.12))
-                                .frame(width: 50, height: 50)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .stroke(item.2.opacity(0.20), lineWidth: 1))
-                            Text(item.0).font(.system(size: 22))
-                        }
-                        Text(item.1).font(PCFont.micro()).foregroundStyle(Color.pcText2)
-                    }
-                    .frame(maxWidth: .infinity)
+                quickActionButton(emoji: "💉", label: "Vaksin", color: Color.pcOrange) {
+                    vm.selectedTab = 3
+                    vm.selectedHealthSegment = 0
+                }
+                quickActionButton(emoji: "🍖", label: "Makan", color: Color.pcGreen) {
+                    vm.selectedTab = 2
+                }
+                quickActionButton(emoji: "💊", label: "Obat", color: Color.pcPurple) {
+                    vm.selectedTab = 3
+                    vm.selectedHealthSegment = 1
+                }
+                quickActionButton(emoji: "📋", label: "Riwayat", color: Color.pcIndigo) {
+                    vm.selectedTab = 3
+                    vm.selectedHealthSegment = 2
                 }
             }
             .padding(.horizontal, PCSpace.lg)
         }
         .padding(.bottom, PCSpace.md)
+    }
+
+    private func quickActionButton(emoji: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(color.opacity(0.12))
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .stroke(color.opacity(0.20), lineWidth: 1))
+                    Text(emoji).font(.system(size: 22))
+                }
+                Text(label).font(PCFont.micro()).foregroundStyle(Color.pcText2)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: Active Schedules
@@ -513,12 +536,16 @@ struct PetDetailView: View {
     // MARK: Weight mini chart
     private var weightPreview: some View {
         VStack(spacing: 12) {
-            PCSectionHeader(title: "Berat Badan", actionTitle: "Lihat Grafik")
+            PCSectionHeader(title: "Berat Badan", actionTitle: "Lihat Grafik") {
+                        vm.selectedPet = pet
+                        vm.navigateToWeightChart = true
+                        vm.selectedTab = 3
+                    }
                 .padding(.horizontal, PCSpace.lg)
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Sekarang").font(PCFont.caption()).foregroundStyle(Color.pcText2)
-                    Text(String(format: "%.1f kg", pet.weight))
+                    Text(String(format: "%.1f kg", latestWeight))
                         .font(PCFont.title2(.black)).foregroundStyle(Color.pcIndigo)
                 }
                 Spacer()

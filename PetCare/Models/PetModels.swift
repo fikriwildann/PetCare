@@ -98,7 +98,12 @@ struct Vaccine: Identifiable, Codable {
     var notes: String?
 
     var status: VaccineStatus {
-        guard let next = nextDate else { return .done }
+        guard let next = nextDate else {
+            // Tidak ada nextDate — cek tanggal vaksin
+            let days = Calendar.current.dateComponents([.day], from: date, to: Date()).day ?? 0
+            if days > 0 { return .done }
+            return .upcoming
+        }
         let days = Calendar.current.dateComponents([.day], from: Date(), to: next).day ?? 0
         if days < 0 { return .overdue }
         if days <= 7 { return .upcoming }
