@@ -14,6 +14,7 @@ struct ProfileView: View {
     @State private var showAboutPetCare = false
     @State private var showRating = false
     @State private var showChangePassword = false
+    @State private var showNotificationSettings = false
 
     var body: some View {
         ZStack {
@@ -39,7 +40,7 @@ struct ProfileView: View {
                                   title: "Ubah Password") { showChangePassword = true }
                         PCMenuRow(icon: "bell.fill", iconBg: Color.pcOrange,
                                   title: "Pengaturan Notifikasi",
-                                  badge: "\(vm.unreadCount)") {}
+                                  badge: "\(vm.unreadCount)") { showNotificationSettings = true }
                     }
 
                     // Help & Info
@@ -81,6 +82,9 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showChangePassword) {
             ChangePasswordSheetView().environmentObject(vm)
+        }
+        .sheet(isPresented: $showNotificationSettings) {
+            NotificationSettingsView().environmentObject(vm)
         }
     }
 

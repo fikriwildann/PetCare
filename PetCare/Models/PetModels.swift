@@ -219,7 +219,7 @@ struct WeightRecord: Identifiable, Codable {
 }
 
 // MARK: - Notification
-struct AppNotification: Identifiable, Codable {
+struct AppNotification: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
     var type: NotificationType
     var title: String

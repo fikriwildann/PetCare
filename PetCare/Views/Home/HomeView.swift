@@ -8,6 +8,7 @@ struct HomeView: View {
     @State private var scrollOffset: CGFloat = 0
     @State private var appeared = false
     @Namespace private var ns
+    @State private var showNotifications = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -36,6 +37,7 @@ struct HomeView: View {
         }
         .onAppear { withAnimation(.pcSpring.delay(0.15)) { appeared = true } }
         .sheet(isPresented: $vm.showAddPet) { AddPetView() }
+        .sheet(isPresented: $showNotifications) { NotificationListView() }
     }
 
     // MARK: Header
@@ -53,7 +55,7 @@ struct HomeView: View {
             }
             Spacer()
             HStack(spacing: 10) {
-                PCIconNavButton(icon: "bell.fill", badge: vm.unreadCount) {}
+                PCIconNavButton(icon: "bell.fill", badge: vm.unreadCount) { showNotifications = true }
             }
         }
         .padding(.horizontal, PCSpace.lg)

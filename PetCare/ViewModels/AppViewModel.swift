@@ -105,14 +105,32 @@ final class AppViewModel: ObservableObject {
     func addVaccine(_ v: Vaccine) {
         withAnimation(.pcSpring) { vaccines.append(v) }
         Task { try? await FirebaseScheduleService.shared.addVaccine(v) }
+        let petName = petName(for: v.petId)
+        NotificationService.shared.scheduleVaccineReminder(for: v, petName: petName)
+        let notif = AppNotification(type: .vaccine, title: "Vaksin Ditambahkan",
+                                     message: "Vaksin \(v.name) untuk \(petName) berhasil disimpan.",
+                                     date: Date(), isRead: false, petId: v.petId)
+        withAnimation(.pcSpring) { notifications.insert(notif, at: 0) }
     }
     func addMedication(_ m: Medication) {
         withAnimation(.pcSpring) { medications.append(m) }
         Task { try? await FirebaseScheduleService.shared.addMedication(m) }
+        let petName = petName(for: m.petId)
+        NotificationService.shared.scheduleMedicationReminder(for: m, petName: petName)
+        let notif = AppNotification(type: .medication, title: "Obat Ditambahkan",
+                                     message: "Jadwal obat \(m.name) untuk \(petName) berhasil disimpan.",
+                                     date: Date(), isRead: false, petId: m.petId)
+        withAnimation(.pcSpring) { notifications.insert(notif, at: 0) }
     }
     func addFeeding(_ f: FeedingSchedule) {
         withAnimation(.pcSpring) { feedings.append(f) }
         Task { try? await FirebaseScheduleService.shared.addFeeding(f) }
+        let petName = petName(for: f.petId)
+        NotificationService.shared.scheduleFeedingReminder(for: f, petName: petName)
+        let notif = AppNotification(type: .feeding, title: "Jadwal Makan Ditambahkan",
+                                     message: "\(f.mealType.rawValue) untuk \(petName) berhasil disimpan.",
+                                     date: Date(), isRead: false, petId: f.petId)
+        withAnimation(.pcSpring) { notifications.insert(notif, at: 0) }
     }
     func addHealthRecord(_ r: HealthRecord) {
         withAnimation(.pcSpring) { healthRecords.append(r) }
@@ -209,6 +227,7 @@ final class AppViewModel: ObservableObject {
             Task {
                 await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
+                _ = await NotificationService.shared.requestPermission()
             }
             isLoggedIn = true
             showOnboarding = false
