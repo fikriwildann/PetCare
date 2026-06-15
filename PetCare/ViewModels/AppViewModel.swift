@@ -294,4 +294,47 @@ final class AppViewModel: ObservableObject {
             }
         }
     }
+
+    func changePassword(currentPassword: String, newPassword: String, completion: @escaping (Bool, String?) -> Void) {
+        authError = nil
+        guard let user = Auth.auth().currentUser else {
+            completion(false, "Tidak ada pengguna yang login")
+            return
+        }
+
+        // Re-authenticate first (Firebase requirement)
+        let credential = EmailAuthProvider.credential(withEmail: user.email ?? "", password: currentPassword)
+
+        Task {
+            do {
+                try await user.reauthenticate(with: credential)
+                try await user.updatePassword(to: newPassword)
+                await MainActor.run {
+                    completion(true, nil)
+                }
+            } catch let error as NSError {
+                await MainActor.run {
+                    completion(false, mapChangePasswordError(error))
+                }
+            }
+        }
+    }
+
+    private func mapChangePasswordError(_ error: NSError) -> String {
+        let errorCode = AuthErrorCode(rawValue: error.code)
+        switch errorCode {
+        case .wrongPassword:
+            return "Password saat ini salah"
+        case .invalidCredential:
+            return "Kredensial tidak valid"
+        case .networkError:
+            return "Kesalahan jaringan"
+        case .tooManyRequests:
+            return "Terlalu banyak percobaan, coba lagi nanti"
+        case .userTokenExpired:
+            return "Sesi habis, silakan login ulang"
+        default:
+            return "Gagal mengubah password. Coba lagi nanti"
+        }
+    }
 }

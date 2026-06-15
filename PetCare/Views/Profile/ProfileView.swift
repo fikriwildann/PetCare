@@ -13,6 +13,7 @@ struct ProfileView: View {
     @State private var showEditProfile = false
     @State private var showAboutPetCare = false
     @State private var showRating = false
+    @State private var showChangePassword = false
 
     var body: some View {
         ZStack {
@@ -34,6 +35,8 @@ struct ProfileView: View {
                     menuSection(title: "Akun") {
                         PCMenuRow(icon: "pencil", iconBg: Color.pcIndigo,
                                   title: "Edit Profil") { showEditProfile = true }
+                        PCMenuRow(icon: "lock.fill", iconBg: Color.pcGreen,
+                                  title: "Ubah Password") { showChangePassword = true }
                         PCMenuRow(icon: "bell.fill", iconBg: Color.pcOrange,
                                   title: "Pengaturan Notifikasi",
                                   badge: "\(vm.unreadCount)") {}
@@ -75,6 +78,9 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showRating) {
             RatingView().environmentObject(vm)
+        }
+        .sheet(isPresented: $showChangePassword) {
+            ChangePasswordSheetView().environmentObject(vm)
         }
     }
 
