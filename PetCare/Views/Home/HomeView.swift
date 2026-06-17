@@ -68,52 +68,56 @@ struct HomeView: View {
 
     // MARK: Hero Card
     private var heroCard: some View {
-        ZStack(alignment: .bottomLeading) {
+        ZStack {
             // Background gradient
             RoundedRectangle(cornerRadius: PCRadius.xxxl, style: .continuous)
                 .fill(Color.heroGradient)
-                .frame(height: 170)
                 .overlay(
-                    // Glass highlight at top
                     RoundedRectangle(cornerRadius: PCRadius.xxxl, style: .continuous)
                         .stroke(
-                            LinearGradient(colors: [.white.opacity(0.35), .clear],
-                                           startPoint: .top, endPoint: .bottom), lineWidth: 1.5))
-                .shadow(color: Color.pcIndigo.opacity(0.40), radius: 28, x: 0, y: 12)
+                            LinearGradient(colors: [.white.opacity(0.4), .clear],
+                                           startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 1)), lineWidth: 1)
+                )
+                .shadow(color: Color.pcIndigo.opacity(0.35), radius: 24, x: 0, y: 10)
 
-            // Decorative orbs
-            Circle().fill(.white.opacity(0.07)).frame(width: 140).offset(x: 220, y: -20)
-            Circle().fill(.white.opacity(0.05)).frame(width: 90).offset(x: 280, y: 40)
-            Text("🐾").font(.system(size: 80)).opacity(0.08).offset(x: 210, y: 10)
+            // Subtle paw watermark
+            Text("🐾")
+                .font(.system(size: 100))
+                .foregroundStyle(.white.opacity(0.06))
+                .offset(x: 90, y: 10)
 
             // Content
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Status Hari Ini")
                     .font(PCFont.caption().weight(.semibold))
-                    .foregroundStyle(.white.opacity(0.70))
+                    .foregroundStyle(.white.opacity(0.65))
+
                 Text("\(vm.pets.count) hewan sehat 🎉")
                     .font(PCFont.title2(.black))
                     .foregroundStyle(.white)
+
                 HStack(spacing: 8) {
-                    Label("\(vm.upcomingVaccines.count) vaksin menunggu",
+                    Label("\(vm.upcomingVaccines.count) vaksin",
                           systemImage: "syringe.fill")
                         .font(PCFont.micro())
-                        .foregroundStyle(.white.opacity(0.80))
-                        .padding(.horizontal, 12).padding(.vertical, 5)
-                        .background(.white.opacity(0.18))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(.white.opacity(0.15))
                         .clipShape(Capsule())
+
                     Label("\(vm.activeMedications.count) obat aktif",
                           systemImage: "pills.fill")
                         .font(PCFont.micro())
-                        .foregroundStyle(.white.opacity(0.80))
-                        .padding(.horizontal, 12).padding(.vertical, 5)
-                        .background(.white.opacity(0.18))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(.white.opacity(0.15))
                         .clipShape(Capsule())
                 }
             }
-            .padding(.horizontal, 22)
-            .padding(.bottom, 22)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(22)
         }
+        .frame(height: 160)
         .padding(.horizontal, PCSpace.lg)
         .padding(.bottom, PCSpace.md)
         .offset(y: appeared ? 0 : 20)

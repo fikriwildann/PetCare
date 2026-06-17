@@ -13,6 +13,9 @@ struct GlobalSheetModifier: ViewModifier {
             .sheet(isPresented: $vm.showAddVaccine)      { AddVaccineView() }
             .sheet(isPresented: $vm.showAddMedication)   { AddMedicationView() }
             .sheet(isPresented: $vm.showAddFeeding)      { AddScheduleFeedingView() }
+            .sheet(isPresented: $vm.showEditFeeding)     { EditFeedingView() }
+            .sheet(isPresented: $vm.showEditVaccine)    { EditVaccineView() }
+            .sheet(isPresented: $vm.showEditMedication)  { EditMedicationView() }
             .sheet(isPresented: $vm.showAddHealthRecord) { AddHealthRecordView() }
             .sheet(isPresented: $vm.showAddWeight)       { AddWeightRecordView() }
     }

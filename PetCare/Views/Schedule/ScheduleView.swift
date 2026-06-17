@@ -36,32 +36,32 @@ struct ScheduleView: View {
                     .padding(.bottom, PCSpace.sm)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
+                    LazyVStack(spacing: 0) {
                         if segment == 0 {
                             if vm.feedings.isEmpty && vm.vaccines.isEmpty && vm.medications.isEmpty {
                                 PCEmptyState(icon: "calendar", title: "Belum Ada Jadwal",
                                              message: "Tambahkan jadwal makan, vaksin, atau obat untuk hewan peliharaan Anda")
                                     .padding(.top, PCSpace.xxxl)
                             } else {
-                                if !vm.feedings.isEmpty { feedingSection }
-                                if !vm.vaccines.isEmpty { vaccineSection }
-                                if !vm.activeMedications.isEmpty { medicationSection }
+                                feedingSectionContent
+                                if !vm.vaccines.isEmpty { vaccineSectionContent }
+                                if !vm.activeMedications.isEmpty { medicationSectionContent }
                             }
                         } else if segment == 1 {
                             if vm.feedings.isEmpty {
                                 PCEmptyState(icon: "fork.knife", title: "Belum Ada Jadwal Makan",
                                              message: "Tambah jadwal makan untuk hewan peliharaan Anda")
-                            } else { feedingSection }
+                            } else { feedingSectionContent }
                         } else if segment == 2 {
                             if vm.vaccines.isEmpty {
                                 PCEmptyState(icon: "syringe.fill", title: "Belum Ada Jadwal Vaksin",
                                              message: "Tambah jadwal vaksin untuk hewan peliharaan Anda")
-                            } else { vaccineSection }
+                            } else { vaccineSectionContent }
                         } else if segment == 3 {
                             if vm.activeMedications.isEmpty {
                                 PCEmptyState(icon: "pills.fill", title: "Belum Ada Jadwal Obat",
                                              message: "Tambah jadwal obat untuk hewan peliharaan Anda")
-                            } else { medicationSection }
+                            } else { medicationSectionContent }
                         }
                         Spacer().frame(height: 100)
                     }
@@ -91,64 +91,60 @@ struct ScheduleView: View {
     }
 
     // MARK: Feeding Section
-    private var feedingSection: some View {
-        VStack(spacing: 10) {
-            PCSectionHeader(title: "Jadwal Makan Hari Ini")
-                .padding(.horizontal, PCSpace.lg)
-
-            // Meal time pills
-            HStack(spacing: 10) {
-                ForEach(MealType.allCases) { type in
-                    let items = vm.feedings.filter { $0.mealType == type }
-                    VStack(spacing: 6) {
-                        ZStack {
-                            Circle()
-                                .fill(type.color.opacity(0.12))
-                                .frame(width: 44, height: 44)
-                                .overlay(Circle().stroke(type.color.opacity(0.20), lineWidth: 1))
-                            Text(type.emoji).font(.system(size: 20))
-                        }
-                        Text(type.rawValue)
-                            .font(PCFont.micro()).foregroundStyle(Color.pcText2)
-                        Text("\(items.count)")
-                            .font(PCFont.caption().weight(.bold)).foregroundStyle(type.color)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-            }
-            .padding(PCSpace.md)
-            .elevatedGlass(radius: PCRadius.xl)
+    @ViewBuilder
+    private var feedingSectionContent: some View {
+        PCSectionHeader(title: "Jadwal Makan Hari Ini")
             .padding(.horizontal, PCSpace.lg)
+            .padding(.top, 20)
 
-            ForEach(vm.feedings) { f in
-                FeedingRow(feeding: f, petName: vm.petName(for: f.petId))
-                    .padding(.horizontal, PCSpace.lg)
-                    .onTapGesture { vm.toggleFeedingComplete(f.id) }
+        // Meal time pills
+        HStack(spacing: 10) {
+            ForEach(MealType.allCases) { type in
+                let items = vm.feedings.filter { $0.mealType == type }
+                VStack(spacing: 6) {
+                    ZStack {
+                        Circle()
+                            .fill(type.color.opacity(0.12))
+                            .frame(width: 44, height: 44)
+                            .overlay(Circle().stroke(type.color.opacity(0.20), lineWidth: 1))
+                        Text(type.emoji).font(.system(size: 20))
+                    }
+                    Text(type.rawValue)
+                        .font(PCFont.micro()).foregroundStyle(Color.pcText2)
+                    Text("\(items.count)")
+                        .font(PCFont.caption().weight(.bold)).foregroundStyle(type.color)
+                }
+                .frame(maxWidth: .infinity)
             }
+        }
+        .padding(PCSpace.md)
+        .elevatedGlass(radius: PCRadius.xl)
+        .padding(.horizontal, PCSpace.lg)
+
+        ForEach(vm.feedings) { f in
+            FeedingRow(feeding: f, petName: vm.petName(for: f.petId))
         }
     }
 
     // MARK: Vaccine Section
-    private var vaccineSection: some View {
-        VStack(spacing: 10) {
-            PCSectionHeader(title: "Vaksin", actionTitle: "Semua")
-                .padding(.horizontal, PCSpace.lg)
-            ForEach(vm.vaccines.prefix(4)) { v in
-                VaccineScheduleRow(vaccine: v, petName: vm.petName(for: v.petId))
-                    .padding(.horizontal, PCSpace.lg)
-            }
+    @ViewBuilder
+    private var vaccineSectionContent: some View {
+        PCSectionHeader(title: "Vaksin", actionTitle: "Semua")
+            .padding(.horizontal, PCSpace.lg)
+            .padding(.top, 20)
+        ForEach(vm.vaccines.prefix(4)) { v in
+            VaccineScheduleRow(vaccine: v, petName: vm.petName(for: v.petId))
         }
     }
 
     // MARK: Medication Section
-    private var medicationSection: some View {
-        VStack(spacing: 10) {
-            PCSectionHeader(title: "Obat Aktif", actionTitle: "Semua")
-                .padding(.horizontal, PCSpace.lg)
-            ForEach(vm.activeMedications.prefix(3)) { m in
-                MedicationScheduleRow(med: m, petName: vm.petName(for: m.petId))
-                    .padding(.horizontal, PCSpace.lg)
-            }
+    @ViewBuilder
+    private var medicationSectionContent: some View {
+        PCSectionHeader(title: "Obat Aktif", actionTitle: "Semua")
+            .padding(.horizontal, PCSpace.lg)
+            .padding(.top, 20)
+        ForEach(vm.activeMedications.prefix(3)) { m in
+            MedicationScheduleRow(med: m, petName: vm.petName(for: m.petId))
         }
     }
 }
@@ -158,6 +154,7 @@ struct ScheduleView: View {
 struct FeedingRow: View {
     let feeding: FeedingSchedule
     let petName: String
+    @EnvironmentObject var vm: AppViewModel
 
     var body: some View {
         HStack(spacing: 14) {
@@ -184,17 +181,53 @@ struct FeedingRow: View {
                     small: true)
             }
         }
-        .padding(14)
-        .liquidGlass(radius: PCRadius.lg)
+        .padding(.horizontal, PCSpace.lg)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: PCRadius.lg, style: .continuous)
+                .fill(Color.pcCard.opacity(0.6))
+        )
         .overlay(
             RoundedRectangle(cornerRadius: PCRadius.lg, style: .continuous)
-                .stroke(feeding.isCompleted ? Color.pcGreen.opacity(0.20) : Color.clear, lineWidth: 1)
+                .stroke(feeding.isCompleted ? Color.pcGreen.opacity(0.20) : Color.pcBorder, lineWidth: 1)
         )
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button {
+                vm.editingFeeding = feeding
+                vm.showEditFeeding = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                vm.deleteFeeding(feeding)
+            } label: {
+                Label("Hapus", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                vm.deleteFeeding(feeding)
+            } label: {
+                Label("Hapus", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                vm.editingFeeding = feeding
+                vm.showEditFeeding = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .tint(.blue)
+        }
+        .onTapGesture { vm.toggleFeedingComplete(feeding.id) }
     }
 }
 
 struct VaccineScheduleRow: View {
     let vaccine: Vaccine; let petName: String
+    @EnvironmentObject var vm: AppViewModel
 
     var body: some View {
         HStack(spacing: 14) {
@@ -215,17 +248,52 @@ struct VaccineScheduleRow: View {
             Spacer()
             PCBadge(text: vaccine.status.rawValue, color: vaccine.status.color, small: true)
         }
-        .padding(14)
-        .liquidGlass(radius: PCRadius.lg)
+        .padding(.horizontal, PCSpace.lg)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: PCRadius.lg, style: .continuous)
+                .fill(Color.pcCard.opacity(0.6))
+        )
         .overlay(
             RoundedRectangle(cornerRadius: PCRadius.lg, style: .continuous)
                 .stroke(vaccine.status.color.opacity(0.18), lineWidth: 1)
         )
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button {
+                vm.editingVaccine = vaccine
+                vm.showEditVaccine = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                vm.deleteVaccine(vaccine)
+            } label: {
+                Label("Hapus", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                vm.deleteVaccine(vaccine)
+            } label: {
+                Label("Hapus", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                vm.editingVaccine = vaccine
+                vm.showEditVaccine = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .tint(.blue)
+        }
     }
 }
 
 struct MedicationScheduleRow: View {
     let med: Medication; let petName: String
+    @EnvironmentObject var vm: AppViewModel
 
     var body: some View {
         VStack(spacing: 10) {
@@ -256,8 +324,45 @@ struct MedicationScheduleRow: View {
                 }
             }
         }
-        .padding(14)
-        .liquidGlass(radius: PCRadius.lg)
+        .padding(.horizontal, PCSpace.lg)
+        .padding(.vertical, 14)
+        .background(
+            RoundedRectangle(cornerRadius: PCRadius.lg, style: .continuous)
+                .fill(Color.pcCard.opacity(0.6))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: PCRadius.lg, style: .continuous)
+                .stroke(Color.pcPurple.opacity(0.18), lineWidth: 1)
+        )
+        .contextMenu {
+            Button {
+                vm.editingMedication = med
+                vm.showEditMedication = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            Button(role: .destructive) {
+                vm.deleteMedication(med)
+            } label: {
+                Label("Hapus", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+            Button(role: .destructive) {
+                vm.deleteMedication(med)
+            } label: {
+                Label("Hapus", systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            Button {
+                vm.editingMedication = med
+                vm.showEditMedication = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .tint(.blue)
+        }
     }
 }
 
@@ -306,8 +411,6 @@ struct FeedingDetailView: View {
 
                         ForEach(petFeedings) { f in
                             FeedingRow(feeding: f, petName: pet.name)
-                                .padding(.horizontal, PCSpace.lg)
-                                .onTapGesture { vm.toggleFeedingComplete(f.id) }
                         }
 
                         if petFeedings.isEmpty {

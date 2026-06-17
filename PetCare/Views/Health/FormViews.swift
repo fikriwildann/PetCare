@@ -603,6 +603,138 @@ func noteEditor(text: Binding<String>) -> some View {
 #Preview("Add Feeding") { AddFeedingView().environmentObject(AppViewModel()) }
 
 // ─────────────────────────────────────────
+// MARK: EditFeedingView
+// ─────────────────────────────────────────
+struct EditFeedingView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var vm: AppViewModel
+
+    @State private var selectedPetId: UUID?
+    @State private var mealType  = MealType.breakfast
+    @State private var time      = Date()
+    @State private var foodName  = ""
+    @State private var portion   = ""
+    @State private var notes     = ""
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                PCMeshBackground()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        Spacer().frame(height: 4)
+
+                        formCard {
+                            sectionLabel("Pilih Hewan")
+                            if vm.pets.isEmpty {
+                                Text("Belum ada hewan. Tambah dulu di menu Pets.")
+                                    .font(PCFont.caption()).foregroundStyle(Color.pcText3)
+                                    .padding(.vertical, 8)
+                            } else {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(vm.pets) { p in
+                                            PetPickerChip(pet: p, selected: selectedPetId == p.id) {
+                                                withAnimation(.pcSpring) { selectedPetId = p.id }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Waktu Makan")
+                            HStack(spacing: 10) {
+                                ForEach(MealType.allCases, id: \.self) { t in
+                                    Button { withAnimation(.pcSpring) { mealType = t } } label: {
+                                        VStack(spacing: 6) {
+                                            Text(t.emoji).font(.system(size: 22))
+                                            Text(t.rawValue)
+                                                .font(PCFont.micro()).lineLimit(1)
+                                        }
+                                        .frame(maxWidth: .infinity).padding(.vertical, 12)
+                                        .foregroundStyle(mealType == t ? t.color : Color.pcText2)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: PCRadius.sm, style: .continuous)
+                                                .fill(mealType == t ? t.color.opacity(0.12) : Color.clear)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: PCRadius.sm, style: .continuous)
+                                                        .stroke(mealType == t ? t.color.opacity(0.30) : Color.pcBorder,
+                                                                lineWidth: 1))
+                                        )
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("JAM MAKAN").font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
+                                DatePicker("", selection: $time, displayedComponents: .hourAndMinute)
+                                    .datePickerStyle(.wheel)
+                                    .labelsHidden()
+                                    .tint(Color.pcIndigo)
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Makanan")
+                            PCTextField(label: "Nama Makanan", placeholder: "Contoh: Dry Food Premium", text: $foodName)
+                            PCTextField(label: "Porsi", placeholder: "Contoh: 200 gram", text: $portion)
+                        }
+
+                        formCard {
+                            sectionLabel("Catatan (Opsional)")
+                            noteEditor(text: $notes)
+                        }
+
+                        PCPrimaryButton("Simpan Perubahan", icon: "checkmark") { save() }
+                            .padding(.horizontal, PCSpace.lg)
+                            .disabled(foodName.isEmpty || selectedPetId == nil)
+                            .opacity(foodName.isEmpty || selectedPetId == nil ? 0.5 : 1)
+
+                        Spacer().frame(height: 40)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") { dismiss() }.foregroundStyle(Color.pcIndigo)
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("Edit Jadwal Makan").font(PCFont.headline()).foregroundStyle(Color.pcText1)
+                }
+            }
+            .onAppear {
+                if let f = vm.editingFeeding {
+                    selectedPetId = f.petId
+                    mealType = f.mealType
+                    time = f.time
+                    foodName = f.foodName
+                    portion = f.portion
+                    notes = f.notes ?? ""
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let petId = selectedPetId, var f = vm.editingFeeding else { return }
+        f.petId = petId
+        f.mealType = mealType
+        f.time = time
+        f.foodName = foodName
+        f.portion = portion
+        f.notes = notes.isEmpty ? nil : notes
+        vm.updateFeeding(f)
+        vm.editingFeeding = nil
+        dismiss()
+    }
+}
+
+// ─────────────────────────────────────────
 // MARK: AddScheduleFeedingView (used by ScheduleView)
 // ─────────────────────────────────────────
 struct AddScheduleFeedingView: View {
@@ -716,5 +848,257 @@ struct AddScheduleFeedingView: View {
                                 foodName: foodName, portion: portion,
                                 notes: notes.isEmpty ? nil : notes)
         vm.addFeeding(f); dismiss()
+    }
+}
+
+// ─────────────────────────────────────────
+// MARK: EditVaccineView
+// ─────────────────────────────────────────
+struct EditVaccineView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var vm: AppViewModel
+
+    @State private var selectedPetId: UUID?
+    @State private var name        = ""
+    @State private var date        = Date()
+    @State private var nextDate    = Calendar.current.date(byAdding: .year, value: 1, to: Date())!
+    @State private var clinic      = ""
+    @State private var doctorName  = ""
+    @State private var notes       = ""
+    @State private var hasNextDate = true
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                PCMeshBackground()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        Spacer().frame(height: 4)
+
+                        formCard {
+                            sectionLabel("Pilih Hewan")
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(vm.pets) { p in
+                                        PetPickerChip(pet: p, selected: selectedPetId == p.id) {
+                                            withAnimation(.pcSpring) { selectedPetId = p.id }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Detail Vaksin")
+                            PCTextField(label: "Nama Vaksin", placeholder: "Contoh: Vaksin Rabies", text: $name)
+                            dateRow("Tanggal Vaksin", selection: $date)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Toggle(isOn: $hasNextDate.animation(.pcSpring)) {
+                                    Text("Jadwalkan Vaksin Berikutnya")
+                                        .font(PCFont.subhead()).foregroundStyle(Color.pcText1)
+                                }
+                                .tint(Color.pcIndigo)
+                                if hasNextDate {
+                                    dateRow("Jadwal Berikutnya", selection: $nextDate)
+                                        .transition(.opacity.combined(with: .move(edge: .top)))
+                                }
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Info Klinik (Opsional)")
+                            PCTextField(label: "Nama Klinik", placeholder: "Contoh: Klinik Hewan Sehat", text: $clinic)
+                            PCTextField(label: "Nama Dokter", placeholder: "Contoh: Dr. Hendra", text: $doctorName)
+                        }
+
+                        formCard {
+                            sectionLabel("Catatan (Opsional)")
+                            noteEditor(text: $notes)
+                        }
+
+                        PCPrimaryButton("Simpan Perubahan", icon: "checkmark") { save() }
+                            .padding(.horizontal, PCSpace.lg)
+                            .disabled(name.isEmpty || selectedPetId == nil)
+                            .opacity(name.isEmpty || selectedPetId == nil ? 0.5 : 1)
+
+                        Spacer().frame(height: 40)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") { dismiss() }.foregroundStyle(Color.pcIndigo)
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("Edit Vaksin").font(PCFont.headline()).foregroundStyle(Color.pcText1)
+                }
+            }
+            .onAppear {
+                if let v = vm.editingVaccine {
+                    selectedPetId = v.petId
+                    name = v.name
+                    date = v.date
+                    nextDate = v.nextDate ?? Calendar.current.date(byAdding: .year, value: 1, to: Date())!
+                    clinic = v.clinic ?? ""
+                    doctorName = v.doctorName ?? ""
+                    notes = v.notes ?? ""
+                    hasNextDate = v.nextDate != nil
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let petId = selectedPetId, var v = vm.editingVaccine else { return }
+        v.petId = petId
+        v.name = name
+        v.date = date
+        v.nextDate = hasNextDate ? nextDate : nil
+        v.clinic = clinic.isEmpty ? nil : clinic
+        v.doctorName = doctorName.isEmpty ? nil : doctorName
+        v.notes = notes.isEmpty ? nil : notes
+        vm.updateVaccine(v)
+        vm.editingVaccine = nil
+        dismiss()
+    }
+}
+
+// ─────────────────────────────────────────
+// MARK: EditMedicationView
+// ─────────────────────────────────────────
+struct EditMedicationView: View {
+    @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var vm: AppViewModel
+
+    @State private var selectedPetId: UUID?
+    @State private var name       = ""
+    @State private var dosage     = ""
+    @State private var frequency  = MedFrequency.twice
+    @State private var startDate = Date()
+    @State private var hasEndDate = true
+    @State private var endDate   = Calendar.current.date(byAdding: .day, value: 10, to: Date())!
+    @State private var notes      = ""
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                PCMeshBackground()
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        Spacer().frame(height: 4)
+
+                        formCard {
+                            sectionLabel("Pilih Hewan")
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 10) {
+                                    ForEach(vm.pets) { p in
+                                        PetPickerChip(pet: p, selected: selectedPetId == p.id) {
+                                            withAnimation(.pcSpring) { selectedPetId = p.id }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Detail Obat")
+                            PCTextField(label: "Nama Obat", placeholder: "Contoh: Amoxicillin", text: $name)
+                            PCTextField(label: "Dosis", placeholder: "Contoh: 0.5 tablet / 25 mg", text: $dosage)
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("FREKUENSI").font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 8) {
+                                        ForEach(MedFrequency.allCases, id: \.self) { f in
+                                            Button { withAnimation(.pcSpring) { frequency = f } } label: {
+                                                Text(f.rawValue)
+                                                    .font(PCFont.caption().weight(.semibold))
+                                                    .foregroundStyle(frequency == f ? .white : Color.pcText2)
+                                                    .padding(.horizontal, 14).padding(.vertical, 8)
+                                                    .background(
+                                                        Capsule()
+                                                            .fill(frequency == f
+                                                                  ? AnyShapeStyle(Color.primaryGradient)
+                                                                  : AnyShapeStyle(Color.clear))
+                                                            .overlay(Capsule()
+                                                                .stroke(frequency == f ? Color.clear : Color.pcBorder,
+                                                                        lineWidth: 1))
+                                                    )
+                                            }
+                                            .buttonStyle(.plain)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Durasi Pengobatan")
+                            dateRow("Tanggal Mulai", selection: $startDate)
+
+                            Toggle(isOn: $hasEndDate.animation(.pcSpring)) {
+                                Text("Punya Tanggal Selesai")
+                                    .font(PCFont.subhead()).foregroundStyle(Color.pcText1)
+                            }
+                            .tint(Color.pcIndigo)
+
+                            if hasEndDate {
+                                dateRow("Tanggal Selesai", selection: $endDate)
+                                    .transition(.opacity.combined(with: .move(edge: .top)))
+                            }
+                        }
+
+                        formCard {
+                            sectionLabel("Catatan (Opsional)")
+                            noteEditor(text: $notes)
+                        }
+
+                        PCPrimaryButton("Simpan Perubahan", icon: "checkmark") { save() }
+                            .padding(.horizontal, PCSpace.lg)
+                            .disabled(name.isEmpty || selectedPetId == nil)
+                            .opacity(name.isEmpty || selectedPetId == nil ? 0.5 : 1)
+
+                        Spacer().frame(height: 40)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Batal") { dismiss() }.foregroundStyle(Color.pcIndigo)
+                }
+                ToolbarItem(placement: .principal) {
+                    Text("Edit Obat").font(PCFont.headline()).foregroundStyle(Color.pcText1)
+                }
+            }
+            .onAppear {
+                if let m = vm.editingMedication {
+                    selectedPetId = m.petId
+                    name = m.name
+                    dosage = m.dosage
+                    frequency = m.frequency
+                    startDate = m.startDate
+                    endDate = m.endDate ?? Calendar.current.date(byAdding: .day, value: 10, to: Date())!
+                    hasEndDate = m.endDate != nil
+                    notes = m.notes ?? ""
+                }
+            }
+        }
+    }
+
+    private func save() {
+        guard let petId = selectedPetId, var m = vm.editingMedication else { return }
+        m.petId = petId
+        m.name = name
+        m.dosage = dosage
+        m.frequency = frequency
+        m.startDate = startDate
+        m.endDate = hasEndDate ? endDate : nil
+        m.notes = notes.isEmpty ? nil : notes
+        vm.updateMedication(m)
+        vm.editingMedication = nil
+        dismiss()
     }
 }

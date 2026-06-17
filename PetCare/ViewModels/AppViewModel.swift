@@ -47,6 +47,12 @@ final class AppViewModel: ObservableObject {
     @Published var showAddFeeding: Bool = false
     @Published var showAddHealthRecord: Bool = false
     @Published var showAddWeight: Bool = false
+    @Published var showEditFeeding: Bool = false
+    @Published var editingFeeding: FeedingSchedule?
+    @Published var showEditVaccine: Bool = false
+    @Published var editingVaccine: Vaccine?
+    @Published var showEditMedication: Bool = false
+    @Published var editingMedication: Medication?
 
     // MARK: Computed
 
@@ -148,6 +154,36 @@ final class AppViewModel: ObservableObject {
             Task { try? await FirebaseScheduleService.shared.toggleFeedingComplete(id: id, isCompleted: newValue) }
         }
     }
+    func updateFeeding(_ f: FeedingSchedule) {
+        if let i = feedings.firstIndex(where: { $0.id == f.id }) {
+            withAnimation(.pcSpring) { feedings[i] = f }
+            Task { try? await FirebaseScheduleService.shared.updateFeeding(f) }
+        }
+    }
+    func deleteFeeding(_ f: FeedingSchedule) {
+        withAnimation(.pcSpring) { feedings.removeAll { $0.id == f.id } }
+        Task { try? await FirebaseScheduleService.shared.deleteFeeding(id: f.id) }
+    }
+    func updateVaccine(_ v: Vaccine) {
+        if let i = vaccines.firstIndex(where: { $0.id == v.id }) {
+            withAnimation(.pcSpring) { vaccines[i] = v }
+            Task { try? await FirebaseScheduleService.shared.updateVaccine(v) }
+        }
+    }
+    func deleteVaccine(_ v: Vaccine) {
+        withAnimation(.pcSpring) { vaccines.removeAll { $0.id == v.id } }
+        Task { try? await FirebaseScheduleService.shared.deleteVaccine(id: v.id) }
+    }
+    func updateMedication(_ m: Medication) {
+        if let i = medications.firstIndex(where: { $0.id == m.id }) {
+            withAnimation(.pcSpring) { medications[i] = m }
+            Task { try? await FirebaseScheduleService.shared.updateMedication(m) }
+        }
+    }
+    func deleteMedication(_ m: Medication) {
+        withAnimation(.pcSpring) { medications.removeAll { $0.id == m.id } }
+        Task { try? await FirebaseScheduleService.shared.deleteMedication(id: m.id) }
+    }
 
     // MARK: - Load from Firestore
     func loadPetsFromFirestore() async {
@@ -177,6 +213,7 @@ final class AppViewModel: ObservableObject {
                     medications = m
                     healthRecords = h
                     weightRecords = w
+                    notifications = []
                 }
             }
         } catch {
@@ -321,6 +358,7 @@ final class AppViewModel: ObservableObject {
             try Auth.auth().signOut()
             PersistenceService.shared.delete(key: StorageKey.authState)
             withAnimation(.pcSpring) { isLoggedIn = false }
+            notifications = []
             currentUser = SampleData.user
         } catch {
             authError = error.localizedDescription
