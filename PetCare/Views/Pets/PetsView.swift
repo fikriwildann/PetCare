@@ -90,7 +90,6 @@ struct PetsListView: View {
                 .padding(.trailing, PCSpace.lg)
                 .padding(.bottom, 100)
         }
-        .navigationBarHidden(true)
         .onAppear { withAnimation(.pcSpring) { appeared = true } }
         .sheet(isPresented: $vm.showAddPet) { AddPetView() }
     }
