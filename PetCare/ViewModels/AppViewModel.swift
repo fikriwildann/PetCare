@@ -156,31 +156,55 @@ final class AppViewModel: ObservableObject {
     }
     func updateFeeding(_ f: FeedingSchedule) {
         if let i = feedings.firstIndex(where: { $0.id == f.id }) {
+            // Cancel old notification before scheduling new one
+            NotificationService.shared.cancelReminder(id: "feeding-\(f.id)")
             withAnimation(.pcSpring) { feedings[i] = f }
-            Task { try? await FirebaseScheduleService.shared.updateFeeding(f) }
+            Task {
+                try? await FirebaseScheduleService.shared.updateFeeding(f)
+                // Reschedule notification with updated data
+                NotificationService.shared.scheduleFeedingReminder(for: f, petName: petName(for: f.petId))
+            }
         }
     }
     func deleteFeeding(_ f: FeedingSchedule) {
+        // Cancel notification first
+        NotificationService.shared.cancelReminder(id: "feeding-\(f.id)")
         withAnimation(.pcSpring) { feedings.removeAll { $0.id == f.id } }
         Task { try? await FirebaseScheduleService.shared.deleteFeeding(id: f.id) }
     }
     func updateVaccine(_ v: Vaccine) {
         if let i = vaccines.firstIndex(where: { $0.id == v.id }) {
+            // Cancel old notification before scheduling new one
+            NotificationService.shared.cancelVaccineReminders(for: v.id)
             withAnimation(.pcSpring) { vaccines[i] = v }
-            Task { try? await FirebaseScheduleService.shared.updateVaccine(v) }
+            Task {
+                try? await FirebaseScheduleService.shared.updateVaccine(v)
+                // Reschedule notification with updated data
+                NotificationService.shared.scheduleVaccineReminder(for: v, petName: petName(for: v.petId))
+            }
         }
     }
     func deleteVaccine(_ v: Vaccine) {
+        // Cancel notification first
+        NotificationService.shared.cancelVaccineReminders(for: v.id)
         withAnimation(.pcSpring) { vaccines.removeAll { $0.id == v.id } }
         Task { try? await FirebaseScheduleService.shared.deleteVaccine(id: v.id) }
     }
     func updateMedication(_ m: Medication) {
         if let i = medications.firstIndex(where: { $0.id == m.id }) {
+            // Cancel old notifications before scheduling new ones
+            NotificationService.shared.cancelMedicationReminders(for: m.id, scheduleTimesCount: m.scheduleTimes.count)
             withAnimation(.pcSpring) { medications[i] = m }
-            Task { try? await FirebaseScheduleService.shared.updateMedication(m) }
+            Task {
+                try? await FirebaseScheduleService.shared.updateMedication(m)
+                // Reschedule notification with updated data
+                NotificationService.shared.scheduleMedicationReminder(for: m, petName: petName(for: m.petId))
+            }
         }
     }
     func deleteMedication(_ m: Medication) {
+        // Cancel notifications first
+        NotificationService.shared.cancelMedicationReminders(for: m.id, scheduleTimesCount: m.scheduleTimes.count)
         withAnimation(.pcSpring) { medications.removeAll { $0.id == m.id } }
         Task { try? await FirebaseScheduleService.shared.deleteMedication(id: m.id) }
     }
@@ -265,6 +289,13 @@ final class AppViewModel: ObservableObject {
                 await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
                 _ = await NotificationService.shared.requestPermission()
+                // Reschedule all notifications after loading from Firestore
+                NotificationService.shared.rescheduleAllReminders(
+                    feedings: feedings,
+                    vaccines: vaccines,
+                    medications: medications,
+                    pets: pets
+                )
             }
             isLoggedIn = true
             showOnboarding = false

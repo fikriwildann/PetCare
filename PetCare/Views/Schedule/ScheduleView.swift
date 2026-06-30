@@ -95,7 +95,7 @@ struct ScheduleView: View {
     private var feedingSectionContent: some View {
         PCSectionHeader(title: "Jadwal Makan Hari Ini")
             .padding(.horizontal, PCSpace.lg)
-            .padding(.top, 20)
+            .padding(.top, 5)
 
         // Meal time pills
         HStack(spacing: 10) {
@@ -121,31 +121,41 @@ struct ScheduleView: View {
         .elevatedGlass(radius: PCRadius.xl)
         .padding(.horizontal, PCSpace.lg)
 
-        ForEach(vm.feedings) { f in
-            FeedingRow(feeding: f, petName: vm.petName(for: f.petId))
+        VStack(spacing: 0) {
+            ForEach(vm.feedings) { f in
+                FeedingRow(feeding: f, petName: vm.petName(for: f.petId))
+            }
         }
+        .padding(.horizontal, PCSpace.lg)
+        .padding(.top, PCSpace.sm)
     }
 
     // MARK: Vaccine Section
     @ViewBuilder
     private var vaccineSectionContent: some View {
-        PCSectionHeader(title: "Vaksin", actionTitle: "Semua")
+        PCSectionHeader(title: "Vaksin")
             .padding(.horizontal, PCSpace.lg)
-            .padding(.top, 20)
-        ForEach(vm.vaccines.prefix(4)) { v in
-            VaccineScheduleRow(vaccine: v, petName: vm.petName(for: v.petId))
+            .padding(.top, 5)
+        VStack(spacing: 0) {
+            ForEach(vm.vaccines.prefix(4)) { v in
+                VaccineScheduleRow(vaccine: v, petName: vm.petName(for: v.petId))
+            }
         }
+        .padding(.horizontal, PCSpace.lg)
     }
 
     // MARK: Medication Section
     @ViewBuilder
     private var medicationSectionContent: some View {
-        PCSectionHeader(title: "Obat Aktif", actionTitle: "Semua")
+        PCSectionHeader(title: "Obat Aktif")
             .padding(.horizontal, PCSpace.lg)
-            .padding(.top, 20)
-        ForEach(vm.activeMedications.prefix(3)) { m in
-            MedicationScheduleRow(med: m, petName: vm.petName(for: m.petId))
+            .padding(.top, 5)
+        VStack(spacing: 0) {
+            ForEach(vm.activeMedications.prefix(3)) { m in
+                MedicationScheduleRow(med: m, petName: vm.petName(for: m.petId))
+            }
         }
+        .padding(.horizontal, PCSpace.lg)
     }
 }
 
