@@ -11,6 +11,7 @@ struct RatingView: View {
     @State private var appeared = false
     @State private var isSubmitting = false
     @State private var showSuccess = false
+    @State private var ratingError: String?
 
     var body: some View {
         ZStack {
@@ -60,6 +61,11 @@ struct RatingView: View {
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear { withAnimation(.pcSpring.delay(0.05)) { appeared = true } }
+        .alert("Gagal Mengirim Rating", isPresented: .constant(ratingError != nil)) {
+            Button("OK") { ratingError = nil }
+        } message: {
+            Text(ratingError ?? "Terjadi kesalahan saat mengirim rating")
+        }
     }
 
     // MARK: Header
@@ -230,8 +236,8 @@ struct RatingView: View {
     private func submitRating() {
         isSubmitting = true
 
-        let rating = FirebaseRatingService.Rating(
-            userId: vm.currentUser.id.uuidString,
+        let rating = Rating(
+            userId: vm.currentUser.id,
             userName: vm.currentUser.name,
             rating: selectedRating,
             review: review.isEmpty ? nil : review
@@ -254,6 +260,7 @@ struct RatingView: View {
             } catch {
                 await MainActor.run {
                     isSubmitting = false
+                    ratingError = "Gagal mengirim rating. Silakan coba lagi."
                 }
             }
         }

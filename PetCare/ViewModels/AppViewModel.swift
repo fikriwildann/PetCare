@@ -58,7 +58,7 @@ final class AppViewModel: ObservableObject {
 
     var unreadCount: Int { notifications.filter { !$0.isRead }.count }
 
-    var todayFeedings: [FeedingSchedule] { feedings }
+    var allFeedings: [FeedingSchedule] { feedings }
 
     var upcomingVaccines: [Vaccine] {
         vaccines.filter { $0.status == .upcoming || $0.status == .overdue }
@@ -213,9 +213,7 @@ final class AppViewModel: ObservableObject {
     func loadPetsFromFirestore() async {
         do {
             let loadedPets = try await FirebasePetService.shared.loadPets()
-            await MainActor.run {
-                withAnimation(.pcSpring) { pets = loadedPets }
-            }
+            withAnimation(.pcSpring) { pets = loadedPets }
         } catch {
             print("Gagal memuat pets dari Firestore: \(error)")
         }
@@ -230,15 +228,13 @@ final class AppViewModel: ObservableObject {
             async let loadedWeights = FirebaseWeightService.shared.loadWeights()
 
             let (f, v, m, h, w) = try await (loadedFeedings, loadedVaccines, loadedMedications, loadedHealthRecords, loadedWeights)
-            await MainActor.run {
-                withAnimation(.pcSpring) {
-                    feedings = f
-                    vaccines = v
-                    medications = m
-                    healthRecords = h
-                    weightRecords = w
-                    notifications = []
-                }
+            withAnimation(.pcSpring) {
+                feedings = f
+                vaccines = v
+                medications = m
+                healthRecords = h
+                weightRecords = w
+                notifications = []
             }
         } catch {
             print("Gagal memuat jadwal dari Firestore: \(error)")
@@ -260,13 +256,12 @@ final class AppViewModel: ObservableObject {
                 let result = try await Auth.auth().signIn(withEmail: email, password: password)
                 let user = result.user
                 currentUser = AppUser(
-                    id: UUID(),
+                    id: user.uid,
                     name: user.displayName ?? email.components(separatedBy: "@").first ?? "User",
                     email: user.email ?? email,
                     profileImageName: nil,
                     joinDate: Date()
                 )
-                PersistenceService.shared.save(true, key: StorageKey.authState)
                 withAnimation(.pcSpring) { isLoggedIn = true }
                 await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
@@ -279,7 +274,7 @@ final class AppViewModel: ObservableObject {
     func checkAuthState() {
         if let user = Auth.auth().currentUser {
             currentUser = AppUser(
-                id: UUID(),
+                id: user.uid,
                 name: user.displayName ?? user.email?.components(separatedBy: "@").first ?? "User",
                 email: user.email ?? "",
                 profileImageName: nil,
@@ -289,7 +284,6 @@ final class AppViewModel: ObservableObject {
                 await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
                 _ = await NotificationService.shared.requestPermission()
-                // Reschedule all notifications after loading from Firestore
                 NotificationService.shared.rescheduleAllReminders(
                     feedings: feedings,
                     vaccines: vaccines,
@@ -317,6 +311,8 @@ final class AppViewModel: ObservableObject {
             return "Kesalahan jaringan"
         case .tooManyRequests:
             return "Terlalu banyak percobaan, coba lagi nanti"
+        case .emailAlreadyInUse:
+            return "Email sudah terdaftar"
         default:
             return "Login gagal. Periksa email dan password Anda"
         }
@@ -335,13 +331,12 @@ final class AppViewModel: ObservableObject {
                 try await changeRequest.commitChanges()
 
                 currentUser = AppUser(
-                    id: UUID(),
+                    id: user.uid,
                     name: name,
                     email: user.email ?? email,
                     profileImageName: nil,
                     joinDate: Date()
                 )
-                PersistenceService.shared.save(true, key: StorageKey.authState)
                 withAnimation(.pcSpring) { isLoggedIn = true }
                 await loadPetsFromFirestore()
                 await loadSchedulesFromFirestore()
@@ -356,14 +351,10 @@ final class AppViewModel: ObservableObject {
         Task {
             do {
                 try await Auth.auth().sendPasswordReset(withEmail: email)
-                await MainActor.run {
-                    completion(true)
-                }
+                completion(true)
             } catch let error as NSError {
-                await MainActor.run {
-                    authError = mapResetPasswordError(error)
-                    completion(false)
-                }
+                authError = mapResetPasswordError(error)
+                completion(false)
             }
         }
     }
@@ -387,7 +378,6 @@ final class AppViewModel: ObservableObject {
     func logout() {
         do {
             try Auth.auth().signOut()
-            PersistenceService.shared.delete(key: StorageKey.authState)
             withAnimation(.pcSpring) { isLoggedIn = false }
             notifications = []
             currentUser = SampleData.user
@@ -424,13 +414,9 @@ final class AppViewModel: ObservableObject {
             do {
                 try await user.reauthenticate(with: credential)
                 try await user.updatePassword(to: newPassword)
-                await MainActor.run {
-                    completion(true, nil)
-                }
+                completion(true, nil)
             } catch let error as NSError {
-                await MainActor.run {
-                    completion(false, mapChangePasswordError(error))
-                }
+                completion(false, mapChangePasswordError(error))
             }
         }
     }

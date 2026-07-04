@@ -169,6 +169,8 @@ struct RegisterView: View {
                         PCTextField(label: "Nama Lengkap", placeholder: "Nama lengkap Anda", text: $name)
                         PCTextField(label: "Email", placeholder: "contoh@email.com",
                                     text: $email, keyboardType: .emailAddress)
+                            .onChange(of: email) { _, _ in vm.authError = nil }
+                            .onChange(of: password) { _, _ in vm.authError = nil }
 
                         VStack(alignment: .leading, spacing: 8) {
                             PCTextField(label: "Password", placeholder: "Min. 8 karakter",
@@ -252,9 +254,7 @@ struct RegisterView: View {
         isLoading = true
         vm.register(name: name, email: email, password: password)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            if vm.authError == nil {
-                isLoading = false
-            }
+            isLoading = false
         }
     }
 }

@@ -7,7 +7,7 @@ import SwiftUI
 struct SampleData {
 
     // MARK: User
-    static let user = AppUser(name: "Fikri Nuswantara", email: "fikri@dinuswantara.ac.id")
+    static let user = AppUser(id: "sample_user_id", name: "Fikri Nuswantara", email: "fikri@dinuswantara.ac.id")
 
     // MARK: Pets
     static let buddy = Pet(

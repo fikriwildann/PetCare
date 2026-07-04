@@ -2,6 +2,7 @@
 // PetCare — Notification Settings
 
 import SwiftUI
+import UserNotifications
 
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) var dismiss
@@ -56,7 +57,8 @@ struct NotificationSettingsView: View {
 
                         // Notification types
                         VStack(spacing: 12) {
-                            sectionHeader("Jenis Notifikasi")
+                            PCSectionLabel(text: "Jenis Notifikasi")
+                                .padding(.horizontal, PCSpace.lg)
                             VStack(spacing: 0) {
                                 notifToggleRow(emoji: "💉", title: "Vaksin", color: .pcOrange, isOn: $vaccineNotif)
                                 Divider().padding(.leading, 58)
@@ -122,13 +124,6 @@ struct NotificationSettingsView: View {
                 .labelsHidden()
         }
         .padding(.vertical, 8)
-    }
-
-    private func sectionHeader(_ t: String) -> some View {
-        Text(t.uppercased())
-            .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, PCSpace.lg)
     }
 
     private func checkPermission() {

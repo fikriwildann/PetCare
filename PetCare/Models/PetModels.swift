@@ -115,6 +115,41 @@ struct Vaccine: Identifiable, Codable {
     }
 }
 
+// MARK: - Vaccine Codable Extensions
+extension Vaccine {
+    var toDictionary: [String: Any] {
+        var dict: [String: Any] = [
+            "id": id.uuidString,
+            "petId": petId.uuidString,
+            "name": name,
+            "date": date.timeIntervalSince1970,
+            "clinic": clinic ?? "",
+            "doctorName": doctorName ?? "",
+            "notes": notes ?? ""
+        ]
+        if let next = nextDate { dict["nextDate"] = next.timeIntervalSince1970 }
+        return dict
+    }
+
+    static func from(dictionary dict: [String: Any]) -> Vaccine? {
+        guard let idString = dict["id"] as? String,
+              let petIdString = dict["petId"] as? String,
+              let name = dict["name"] as? String,
+              let dateInterval = dict["date"] as? TimeInterval
+        else { return nil }
+        return Vaccine(
+            id: UUID(uuidString: idString) ?? UUID(),
+            petId: UUID(uuidString: petIdString) ?? UUID(),
+            name: name,
+            date: Date(timeIntervalSince1970: dateInterval),
+            nextDate: (dict["nextDate"] as? TimeInterval).map { Date(timeIntervalSince1970: $0) },
+            clinic: (dict["clinic"] as? String)?.isEmpty == true ? nil : dict["clinic"] as? String,
+            doctorName: (dict["doctorName"] as? String)?.isEmpty == true ? nil : dict["doctorName"] as? String,
+            notes: (dict["notes"] as? String)?.isEmpty == true ? nil : dict["notes"] as? String
+        )
+    }
+}
+
 enum VaccineStatus: String {
     case done = "Selesai", upcoming = "Akan Datang", overdue = "Terlambat"
     var color: Color {
@@ -151,6 +186,48 @@ struct Medication: Identifiable, Codable {
     }
 }
 
+// MARK: - Medication Codable Extensions
+extension Medication {
+    var toDictionary: [String: Any] {
+        var dict: [String: Any] = [
+            "id": id.uuidString,
+            "petId": petId.uuidString,
+            "name": name,
+            "dosage": dosage,
+            "frequency": frequency.rawValue,
+            "startDate": startDate.timeIntervalSince1970,
+            "scheduleTimes": scheduleTimes.map { $0.timeIntervalSince1970 },
+            "notes": notes ?? "",
+            "isActive": isActive
+        ]
+        if let end = endDate { dict["endDate"] = end.timeIntervalSince1970 }
+        return dict
+    }
+
+    static func from(dictionary dict: [String: Any]) -> Medication? {
+        guard let idString = dict["id"] as? String,
+              let petIdString = dict["petId"] as? String,
+              let name = dict["name"] as? String,
+              let dosage = dict["dosage"] as? String,
+              let frequencyRaw = dict["frequency"] as? String,
+              let startInterval = dict["startDate"] as? TimeInterval,
+              let scheduleTimesIntervals = dict["scheduleTimes"] as? [TimeInterval]
+        else { return nil }
+        return Medication(
+            id: UUID(uuidString: idString) ?? UUID(),
+            petId: UUID(uuidString: petIdString) ?? UUID(),
+            name: name,
+            dosage: dosage,
+            frequency: MedFrequency(rawValue: frequencyRaw) ?? .once,
+            startDate: Date(timeIntervalSince1970: startInterval),
+            endDate: (dict["endDate"] as? TimeInterval).map { Date(timeIntervalSince1970: $0) },
+            scheduleTimes: scheduleTimesIntervals.map { Date(timeIntervalSince1970: $0) },
+            notes: (dict["notes"] as? String)?.isEmpty == true ? nil : dict["notes"] as? String,
+            isActive: dict["isActive"] as? Bool ?? true
+        )
+    }
+}
+
 enum MedFrequency: String, Codable, CaseIterable {
     case once = "1× sehari", twice = "2× sehari", thrice = "3× sehari"
     case asNeeded = "Bila perlu", continuous = "Berkelanjutan"
@@ -166,6 +243,42 @@ struct FeedingSchedule: Identifiable, Codable {
     var portion: String
     var isCompleted: Bool = false
     var notes: String?
+}
+
+// MARK: - FeedingSchedule Codable Extensions
+extension FeedingSchedule {
+    var toDictionary: [String: Any] {
+        [
+            "id": id.uuidString,
+            "petId": petId.uuidString,
+            "mealType": mealType.rawValue,
+            "time": time.timeIntervalSince1970,
+            "foodName": foodName,
+            "portion": portion,
+            "isCompleted": isCompleted,
+            "notes": notes ?? ""
+        ]
+    }
+
+    static func from(dictionary dict: [String: Any]) -> FeedingSchedule? {
+        guard let idString = dict["id"] as? String,
+              let petIdString = dict["petId"] as? String,
+              let mealTypeRaw = dict["mealType"] as? String,
+              let timeInterval = dict["time"] as? TimeInterval,
+              let foodName = dict["foodName"] as? String,
+              let portion = dict["portion"] as? String
+        else { return nil }
+        return FeedingSchedule(
+            id: UUID(uuidString: idString) ?? UUID(),
+            petId: UUID(uuidString: petIdString) ?? UUID(),
+            mealType: MealType(rawValue: mealTypeRaw) ?? .breakfast,
+            time: Date(timeIntervalSince1970: timeInterval),
+            foodName: foodName,
+            portion: portion,
+            isCompleted: dict["isCompleted"] as? Bool ?? false,
+            notes: dict["notes"] as? String
+        )
+    }
 }
 
 enum MealType: String, Codable, CaseIterable, Identifiable {
@@ -190,6 +303,44 @@ struct HealthRecord: Identifiable, Codable {
     var doctorName: String?
     var clinic: String?
     var notes: String?
+}
+
+// MARK: - HealthRecord Codable Extensions
+extension HealthRecord {
+    var toDictionary: [String: Any] {
+        var dict: [String: Any] = [
+            "id": id.uuidString,
+            "petId": petId.uuidString,
+            "type": type.rawValue,
+            "date": date.timeIntervalSince1970,
+            "diagnosis": diagnosis
+        ]
+        if let treatment = treatment { dict["treatment"] = treatment }
+        if let doctorName = doctorName { dict["doctorName"] = doctorName }
+        if let clinic = clinic { dict["clinic"] = clinic }
+        if let notes = notes { dict["notes"] = notes }
+        return dict
+    }
+
+    static func from(dictionary dict: [String: Any]) -> HealthRecord? {
+        guard let idString = dict["id"] as? String,
+              let petIdString = dict["petId"] as? String,
+              let typeRaw = dict["type"] as? String,
+              let dateInterval = dict["date"] as? TimeInterval,
+              let diagnosis = dict["diagnosis"] as? String
+        else { return nil }
+        return HealthRecord(
+            id: UUID(uuidString: idString) ?? UUID(),
+            petId: UUID(uuidString: petIdString) ?? UUID(),
+            date: Date(timeIntervalSince1970: dateInterval),
+            type: HealthRecordType(rawValue: typeRaw) ?? .checkup,
+            diagnosis: diagnosis,
+            treatment: dict["treatment"] as? String,
+            doctorName: dict["doctorName"] as? String,
+            clinic: dict["clinic"] as? String,
+            notes: dict["notes"] as? String
+        )
+    }
 }
 
 enum HealthRecordType: String, Codable, CaseIterable {
@@ -218,6 +369,84 @@ struct WeightRecord: Identifiable, Codable {
     var notes: String?
 }
 
+// MARK: - WeightRecord Codable Extensions
+extension WeightRecord {
+    var toDictionary: [String: Any] {
+        var dict: [String: Any] = [
+            "id": id.uuidString,
+            "petId": petId.uuidString,
+            "date": date.timeIntervalSince1970,
+            "weight": weight
+        ]
+        if let notes = notes { dict["notes"] = notes }
+        return dict
+    }
+
+    static func from(dictionary dict: [String: Any]) -> WeightRecord? {
+        guard let idString = dict["id"] as? String,
+              let petIdString = dict["petId"] as? String,
+              let dateInterval = dict["date"] as? TimeInterval,
+              let weight = dict["weight"] as? Double
+        else { return nil }
+        return WeightRecord(
+            id: UUID(uuidString: idString) ?? UUID(),
+            petId: UUID(uuidString: petIdString) ?? UUID(),
+            date: Date(timeIntervalSince1970: dateInterval),
+            weight: weight,
+            notes: dict["notes"] as? String
+        )
+    }
+}
+
+// MARK: - Rating
+struct Rating: Identifiable, Codable {
+    var id: UUID = UUID()
+    var userId: String
+    var userName: String
+    var rating: Int
+    var review: String?
+    var createdAt: Date = Date()
+}
+
+// MARK: - Rating Codable Extensions
+extension Rating {
+    var toDictionary: [String: Any] {
+        var dict: [String: Any] = [
+            "id": id.uuidString,
+            "userId": userId,
+            "userName": userName,
+            "rating": rating,
+            "createdAt": createdAt.timeIntervalSince1970
+        ]
+        if let review = review {
+            dict["review"] = review
+        }
+        return dict
+    }
+
+    static func from(dictionary dict: [String: Any]) -> Rating? {
+        guard let idString = dict["id"] as? String,
+              let id = UUID(uuidString: idString),
+              let userId = dict["userId"] as? String,
+              let userName = dict["userName"] as? String,
+              let rating = dict["rating"] as? Int else {
+            return nil
+        }
+
+        let review = dict["review"] as? String
+        let createdAt = dict["createdAt"] as? TimeInterval ?? Date().timeIntervalSince1970
+
+        return Rating(
+            id: id,
+            userId: userId,
+            userName: userName,
+            rating: rating,
+            review: review,
+            createdAt: Date(timeIntervalSince1970: createdAt)
+        )
+    }
+}
+
 // MARK: - Notification
 struct AppNotification: Identifiable, Codable, Equatable {
     var id: UUID = UUID()
@@ -242,7 +471,7 @@ enum NotificationType: String, Codable {
 
 // MARK: - User
 struct AppUser: Codable {
-    var id: UUID = UUID()
+    var id: String = ""
     var name: String
     var email: String
     var profileImageName: String?

@@ -1,5 +1,5 @@
 // MARK: - EditViews.swift
-// PetCare — Edit Pet + Edit Profile sheets
+// PetCare — Edit Pet sheet
 
 import SwiftUI
 
@@ -52,7 +52,7 @@ struct EditPetView: View {
                         .padding(.top, PCSpace.md)
 
                         formCard {
-                            sectionLabel("Informasi Dasar")
+                            PCSectionLabel(text: "Informasi Dasar")
                             PCTextField(label: "Nama Hewan", placeholder: "Nama hewan", text: $name)
 
                             VStack(alignment: .leading, spacing: 6) {
@@ -155,87 +155,6 @@ struct EditPetView: View {
     }
 }
 
-// ─────────────────────────────────────────
-// MARK: EditProfileView
-// ─────────────────────────────────────────
-struct EditProfileView: View {
-    @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var vm: AppViewModel
-
-    @State private var name:  String
-    @State private var email: String
-
-    init() {
-        // Will be filled from vm in onAppear, placeholders here
-        _name  = State(initialValue: "")
-        _email = State(initialValue: "")
-    }
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                PCMeshBackground()
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 20) {
-                        Spacer().frame(height: 4)
-
-                        // Avatar
-                        VStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.primaryGradient)
-                                    .frame(width: 90, height: 90)
-                                    .shadow(color: Color.pcIndigo.opacity(0.35), radius: 16, x: 0, y: 6)
-                                Text("🧑").font(.system(size: 42))
-                            }
-                            Text("Ubah Foto Profil")
-                                .font(PCFont.caption().weight(.semibold))
-                                .foregroundStyle(Color.pcIndigo)
-                        }
-                        .padding(.top, PCSpace.md)
-
-                        formCard {
-                            sectionLabel("Informasi Akun")
-                            PCTextField(label: "Nama Lengkap", placeholder: "Nama Anda", text: $name)
-                            PCTextField(label: "Email", placeholder: "email@contoh.com",
-                                        text: $email, keyboardType: .emailAddress)
-                        }
-
-                        PCPrimaryButton("Simpan Profil", icon: "checkmark") { save() }
-                            .padding(.horizontal, PCSpace.lg)
-                            .disabled(name.isEmpty || email.isEmpty)
-                            .opacity(name.isEmpty || email.isEmpty ? 0.5 : 1)
-
-                        Spacer().frame(height: 40)
-                    }
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Batal") { dismiss() }.foregroundStyle(Color.pcIndigo)
-                }
-                ToolbarItem(placement: .principal) {
-                    Text("Edit Profil").font(PCFont.headline()).foregroundStyle(Color.pcText1)
-                }
-            }
-        }
-        .onAppear {
-            name  = vm.currentUser.name
-            email = vm.currentUser.email
-        }
-    }
-
-    private func save() {
-        vm.currentUser.name  = name
-        vm.currentUser.email = email
-        dismiss()
-    }
-}
-
 #Preview("Edit Pet") {
     EditPetView(pet: SampleData.buddy).environmentObject(AppViewModel())
-}
-#Preview("Edit Profile") {
-    EditProfileView().environmentObject(AppViewModel())
 }

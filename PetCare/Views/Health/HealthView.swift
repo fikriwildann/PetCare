@@ -176,7 +176,9 @@ struct MedicationListView: View {
             ScrollView(showsIndicators: false) {
                 LazyVStack(spacing: 12) {
                     if !vm.activeMedications.isEmpty {
-                        sectionLabel("Aktif")
+                        PCSectionLabel(text: "Aktif")
+                            .padding(.horizontal, PCSpace.lg)
+                            .padding(.top, PCSpace.xs)
                         ForEach(vm.activeMedications) { m in
                             MedicationCard(med: m, petName: vm.petName(for: m.petId))
                                 .padding(.horizontal, PCSpace.lg)
@@ -184,7 +186,10 @@ struct MedicationListView: View {
                     }
                     let inactive = vm.medications.filter { !$0.isActive }
                     if !inactive.isEmpty {
-                        sectionLabel("Selesai").opacity(0.7)
+                        PCSectionLabel(text: "Selesai")
+                            .padding(.horizontal, PCSpace.lg)
+                            .padding(.top, PCSpace.xs)
+                            .opacity(0.7)
                         ForEach(inactive) { m in
                             MedicationCard(med: m, petName: vm.petName(for: m.petId))
                                 .padding(.horizontal, PCSpace.lg)
@@ -198,14 +203,6 @@ struct MedicationListView: View {
             PCFAB(icon: "plus") { vm.showAddMedication = true }
                 .padding(.trailing, PCSpace.lg).padding(.bottom, 100)
         }
-    }
-
-    private func sectionLabel(_ t: String) -> some View {
-        Text(t.uppercased())
-            .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, PCSpace.lg)
-            .padding(.top, PCSpace.xs)
     }
 }
 

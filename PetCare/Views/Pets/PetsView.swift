@@ -33,7 +33,7 @@ struct PetsListView: View {
                         .font(PCFont.title1(.black))
                         .foregroundStyle(Color.pcText1)
                     Spacer()
-                    PCIconNavButton(icon: "plus") { vm.showAddPet = true }
+                    PCIconNavButton(icon: "pawprint.fill") { }
                 }
                 .padding(.horizontal, PCSpace.lg)
                 .padding(.vertical, PCSpace.sm)
@@ -196,7 +196,7 @@ struct AddPetView: View {
 
                         // Form card
                         VStack(spacing: 18) {
-                            sectionHeader("Informasi Dasar")
+                            PCSectionLabel(text: "Informasi Dasar")
                             PCTextField(label: "Nama Hewan", placeholder: "Contoh: Buddy", text: $name)
 
                             VStack(alignment: .leading, spacing: 6) {
@@ -307,12 +307,6 @@ struct AddPetView: View {
                 }
             }
         }
-    }
-
-    private func sectionHeader(_ t: String) -> some View {
-        Text(t.uppercased())
-            .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func save() {

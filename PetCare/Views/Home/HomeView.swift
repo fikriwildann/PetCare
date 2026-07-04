@@ -52,6 +52,7 @@ struct HomeView: View {
                     .foregroundStyle(Color.pcText1)
                 + Text(" 👋")
                     .font(PCFont.title1())
+                    .foregroundStyle(Color.pcText1)
             }
             Spacer()
             HStack(spacing: 10) {
@@ -139,7 +140,7 @@ struct HomeView: View {
                      label: "Vaksin Terdekat",
                      color: .pcOrange, delay: 0.14)
             StatCard(icon: "🍖",
-                     value: "\(vm.todayFeedings.count)×",
+                     value: "\(vm.allFeedings.count)×",
                      label: "Jadwal Makan",
                      color: .pcGreen, delay: 0.18)
             StatCard(icon: "💊",
