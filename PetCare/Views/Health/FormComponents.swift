@@ -50,10 +50,14 @@ func dateRow(_ label: String, selection: Binding<Date>) -> some View {
     VStack(alignment: .leading, spacing: 6) {
         Text(label.uppercased())
             .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-        DatePicker("", selection: selection, displayedComponents: .date)
-            .datePickerStyle(.compact)
-            .labelsHidden()
-            .tint(Color.pcIndigo)
+        HStack {
+            Spacer()
+            DatePicker("", selection: selection, displayedComponents: .date)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .tint(Color.pcIndigo)
+            Spacer()
+        }
     }
 }
 

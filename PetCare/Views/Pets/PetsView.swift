@@ -117,7 +117,7 @@ struct PetListRow: View {
                 Text(pet.name)
                     .font(PCFont.subhead().weight(.bold))
                     .foregroundStyle(Color.pcText1)
-                Text("\(pet.breed) • \(pet.age)")
+                Text("\(pet.type.displayName(custom: pet.customType)) • \(pet.age)")
                     .font(PCFont.caption())
                     .foregroundStyle(Color.pcText2)
                 HStack(spacing: 6) {
@@ -167,6 +167,7 @@ struct AddPetView: View {
 
     @State private var name     = ""
     @State private var type: PetType = .dog
+    @State private var customType = ""
     @State private var breed    = ""
     @State private var birthDate = Date()
     @State private var gender: PetGender = .male
@@ -229,15 +230,23 @@ struct AddPetView: View {
                                 }
                             }
 
+                            if type == .other {
+                                PCTextField(label: "Jenis Hewan Lainnya", placeholder: "Contoh: Hamster", text: $customType)
+                            }
+
                             PCTextField(label: "Ras", placeholder: "Contoh: Golden Retriever", text: $breed)
 
                             VStack(alignment: .leading, spacing: 6) {
                                 Text("TANGGAL LAHIR")
                                     .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
-                                DatePicker("", selection: $birthDate, in: ...Date(), displayedComponents: .date)
-                                    .datePickerStyle(.compact)
-                                    .labelsHidden()
-                                    .tint(Color.pcIndigo)
+                                HStack {
+                                    Spacer()
+                                    DatePicker("", selection: $birthDate, in: ...Date(), displayedComponents: .date)
+                                        .datePickerStyle(.compact)
+                                        .labelsHidden()
+                                        .tint(Color.pcIndigo)
+                                    Spacer()
+                                }
                             }
 
                             VStack(alignment: .leading, spacing: 6) {
@@ -310,7 +319,7 @@ struct AddPetView: View {
     }
 
     private func save() {
-        let pet = Pet(name: name, type: type, breed: breed, birthDate: birthDate,
+        let pet = Pet(name: name, type: type, customType: type == .other ? (customType.isEmpty ? nil : customType) : nil, breed: breed, birthDate: birthDate,
                       gender: gender, weight: Double(weight) ?? 0, notes: notes.isEmpty ? nil : notes)
         vm.addPet(pet)
         vm.selectedPet = pet

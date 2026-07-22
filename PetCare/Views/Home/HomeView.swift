@@ -93,7 +93,7 @@ struct HomeView: View {
                     .font(PCFont.caption().weight(.semibold))
                     .foregroundStyle(.white.opacity(0.65))
 
-                Text("\(vm.pets.count) hewan sehat 🎉")
+                Text("\(vm.pets.count) hewan peliharaan 🎉")
                     .font(PCFont.title2(.black))
                     .foregroundStyle(.white)
 
@@ -286,15 +286,6 @@ struct HomeView: View {
                             ? AnyView(PCMiniBarChart(values: weightRecords.map { $0.weight }))
                             : AnyView(EmptyView())
                     ))
-                Divider().padding(.leading, 58)
-                HealthSummaryRow(
-                    icon: "heart.fill", iconBg: Color.pcGreen.opacity(0.12),
-                    iconFg: .pcGreen,
-                    title: "Status Kesehatan",
-                    value: "Sehat",
-                    trailing: AnyView(
-                        PCBadge(text: "Baik", color: .pcGreen)
-                    ))
             }
             .padding(PCSpace.md)
             .elevatedGlass(radius: PCRadius.xl)
@@ -361,7 +352,7 @@ struct HomePetCard: View {
                 Text(pet.name)
                     .font(PCFont.subhead().weight(.bold))
                     .foregroundStyle(Color.pcText1)
-                Text(pet.breed)
+                Text(pet.type.displayName(custom: pet.customType))
                     .font(PCFont.caption())
                     .foregroundStyle(Color.pcText2)
                     .lineLimit(1)

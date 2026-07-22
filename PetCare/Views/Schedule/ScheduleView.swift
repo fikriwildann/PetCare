@@ -77,7 +77,7 @@ struct ScheduleView: View {
                 }
                 Button { vm.showAddVaccine = true } label: {
                     Label("Jadwal Vaksin", systemImage: "syringe.fill")
-                }
+              }
                 Button { vm.showAddMedication = true } label: {
                     Label("Jadwal Obat", systemImage: "pills.fill")
                 }

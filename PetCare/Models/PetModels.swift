@@ -9,6 +9,7 @@ struct Pet: Identifiable, Codable, Hashable {
     var id: UUID = UUID()
     var name: String
     var type: PetType
+    var customType: String?
     var breed: String
     var birthDate: Date
     var gender: PetGender
@@ -38,6 +39,12 @@ enum PetType: String, Codable, CaseIterable, Hashable {
         case .dog: .pcIndigo; case .cat: .pcOrange; case .bird: .pcCyan; case .rabbit: .pcGreen; case .other: .pcPurple
         }
     }
+    func displayName(custom: String?) -> String {
+        if self == .other, let custom = custom, !custom.isEmpty {
+            return custom
+        }
+        return rawValue
+    }
 }
 
 enum PetGender: String, Codable, CaseIterable {
@@ -52,6 +59,7 @@ extension Pet {
             "id": id.uuidString,
             "name": name,
             "type": type.rawValue,
+            "customType": customType ?? "",
             "breed": breed,
             "birthDate": birthDate.timeIntervalSince1970,
             "gender": gender.rawValue,
@@ -75,6 +83,7 @@ extension Pet {
             id: UUID(uuidString: idString) ?? UUID(),
             name: name,
             type: PetType(rawValue: typeRaw) ?? .other,
+            customType: (dict["customType"] as? String)?.isEmpty == true ? nil : dict["customType"] as? String,
             breed: breed,
             birthDate: Date(timeIntervalSince1970: birthDateInterval),
             gender: PetGender(rawValue: genderRaw) ?? .male,
