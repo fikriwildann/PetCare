@@ -13,6 +13,7 @@ struct EditPetView: View {
 
     @State private var name: String
     @State private var type: PetType
+    @State private var customType: String
     @State private var breed: String
     @State private var birthDate: Date
     @State private var gender: PetGender
@@ -23,6 +24,7 @@ struct EditPetView: View {
         self.pet = pet
         _name      = State(initialValue: pet.name)
         _type      = State(initialValue: pet.type)
+        _customType = State(initialValue: pet.customType ?? "")
         _breed     = State(initialValue: pet.breed)
         _birthDate = State(initialValue: pet.birthDate)
         _gender    = State(initialValue: pet.gender)
@@ -79,6 +81,10 @@ struct EditPetView: View {
                                         }
                                     }
                                 }
+                            }
+
+                            if type == .other {
+                                PCTextField(label: "Jenis Hewan Lainnya", placeholder: "Contoh: Hamster", text: $customType)
                             }
 
                             PCTextField(label: "Ras", placeholder: "Ras hewan", text: $breed)
@@ -145,6 +151,7 @@ struct EditPetView: View {
         var updated = pet
         updated.name      = name
         updated.type      = type
+        updated.customType = type == .other ? (customType.isEmpty ? nil : customType) : nil
         updated.breed     = breed
         updated.birthDate = birthDate
         updated.gender    = gender

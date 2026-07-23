@@ -123,7 +123,6 @@ struct PetListRow: View {
                 HStack(spacing: 6) {
                     PCBadge(text: String(format: "%.1f kg", latestWeight),
                             color: pet.type.accent, small: true)
-                    PCBadge(text: "Sehat", color: .pcGreen, small: true)
                 }
             }
             Spacer()
