@@ -18,6 +18,33 @@ struct AddMedicationView: View {
     @State private var hasEndDate = true
     @State private var endDate    = Calendar.current.date(byAdding: .day, value: 10, to: Date())!
     @State private var notes      = ""
+    @State private var scheduleTimes: [Date] = []
+
+    private var scheduleTimeLabels: [String] {
+        switch frequency {
+        case .once:       return ["Waktu Obat"]
+        case .twice:      return ["Waktu Obat (Pagi)", "Waktu Obat (Sore)"]
+        case .thrice:     return ["Waktu Obat (Pagi)", "Waktu Obat (Siang)", "Waktu Obat (Malam)"]
+        case .asNeeded:   return []
+        case .continuous: return []
+        }
+    }
+
+    private func syncScheduleTimes() {
+        let count = scheduleTimeLabels.count
+        let defaultTimes: [Date] = [
+            Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())!,
+            Calendar.current.date(bySettingHour: 14, minute: 0, second: 0, of: Date())!,
+            Calendar.current.date(bySettingHour: 20, minute: 0, second: 0, of: Date())!
+        ]
+        if scheduleTimes.count < count {
+            for i in scheduleTimes.count..<count {
+                scheduleTimes.append(defaultTimes[i % defaultTimes.count])
+            }
+        } else if scheduleTimes.count > count {
+            scheduleTimes = Array(scheduleTimes.prefix(count))
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -68,6 +95,15 @@ struct AddMedicationView: View {
                                             .buttonStyle(.plain)
                                         }
                                     }
+                                }
+                            }
+                        }
+
+                        if !scheduleTimeLabels.isEmpty {
+                            formCard {
+                                PCSectionLabel(text: "Jadwal Waktu Obat")
+                                ForEach(Array(zip(scheduleTimes.indices, scheduleTimeLabels)), id: \.0) { i, label in
+                                    timeRow(label, selection: $scheduleTimes[i])
                                 }
                             }
                         }
@@ -111,6 +147,8 @@ struct AddMedicationView: View {
                     Text("Tambah Obat").font(PCFont.headline()).foregroundStyle(Color.pcText1)
                 }
             }
+            .onAppear { syncScheduleTimes() }
+            .onChange(of: frequency) { _, _ in syncScheduleTimes() }
         }
     }
 
@@ -119,7 +157,7 @@ struct AddMedicationView: View {
         let m = Medication(petId: petId, name: name, dosage: dosage,
                            frequency: frequency, startDate: startDate,
                            endDate: hasEndDate ? endDate : nil,
-                           scheduleTimes: [],
+                           scheduleTimes: scheduleTimes,
                            notes: notes.isEmpty ? nil : notes,
                            isActive: true)
         vm.addMedication(m); dismiss()
@@ -141,6 +179,33 @@ struct EditMedicationView: View {
     @State private var hasEndDate = true
     @State private var endDate   = Calendar.current.date(byAdding: .day, value: 10, to: Date())!
     @State private var notes      = ""
+    @State private var scheduleTimes: [Date] = []
+
+    private var scheduleTimeLabels: [String] {
+        switch frequency {
+        case .once:       return ["Waktu Obat"]
+        case .twice:      return ["Waktu Obat (Pagi)", "Waktu Obat (Sore)"]
+        case .thrice:     return ["Waktu Obat (Pagi)", "Waktu Obat (Siang)", "Waktu Obat (Malam)"]
+        case .asNeeded:   return []
+        case .continuous: return []
+        }
+    }
+
+    private func syncScheduleTimes() {
+        let count = scheduleTimeLabels.count
+        let defaultTimes: [Date] = [
+            Calendar.current.date(bySettingHour: 8, minute: 0, second: 0, of: Date())!,
+            Calendar.current.date(bySettingHour: 14, minute: 0, second: 0, of: Date())!,
+            Calendar.current.date(bySettingHour: 20, minute: 0, second: 0, of: Date())!
+        ]
+        if scheduleTimes.count < count {
+            for i in scheduleTimes.count..<count {
+                scheduleTimes.append(defaultTimes[i % defaultTimes.count])
+            }
+        } else if scheduleTimes.count > count {
+            scheduleTimes = Array(scheduleTimes.prefix(count))
+        }
+    }
 
     var body: some View {
         NavigationStack {
@@ -191,6 +256,15 @@ struct EditMedicationView: View {
                                             .buttonStyle(.plain)
                                         }
                                     }
+                                }
+                            }
+                        }
+
+                        if !scheduleTimeLabels.isEmpty {
+                            formCard {
+                                PCSectionLabel(text: "Jadwal Waktu Obat")
+                                ForEach(Array(zip(scheduleTimes.indices, scheduleTimeLabels)), id: \.0) { i, label in
+                                    timeRow(label, selection: $scheduleTimes[i])
                                 }
                             }
                         }
@@ -244,8 +318,11 @@ struct EditMedicationView: View {
                     endDate = m.endDate ?? Calendar.current.date(byAdding: .day, value: 10, to: Date())!
                     hasEndDate = m.endDate != nil
                     notes = m.notes ?? ""
+                    scheduleTimes = m.scheduleTimes.isEmpty ? [] : m.scheduleTimes
+                    syncScheduleTimes()
                 }
             }
+            .onChange(of: frequency) { _, _ in syncScheduleTimes() }
         }
     }
 
@@ -257,6 +334,7 @@ struct EditMedicationView: View {
         m.frequency = frequency
         m.startDate = startDate
         m.endDate = hasEndDate ? endDate : nil
+        m.scheduleTimes = scheduleTimes
         m.notes = notes.isEmpty ? nil : notes
         vm.updateMedication(m)
         vm.editingMedication = nil

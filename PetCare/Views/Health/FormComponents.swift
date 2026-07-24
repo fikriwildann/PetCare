@@ -61,6 +61,22 @@ func dateRow(_ label: String, selection: Binding<Date>) -> some View {
     }
 }
 
+// MARK: - Time Row Helper
+func timeRow(_ label: String, selection: Binding<Date>) -> some View {
+    VStack(alignment: .leading, spacing: 6) {
+        Text(label.uppercased())
+            .font(PCFont.micro()).foregroundStyle(Color.pcText3).tracking(0.5)
+        HStack {
+            Spacer()
+            DatePicker("", selection: selection, displayedComponents: .hourAndMinute)
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .tint(Color.pcIndigo)
+            Spacer()
+        }
+    }
+}
+
 // MARK: - Note Editor Helper
 func noteEditor(text: Binding<String>) -> some View {
     TextEditor(text: text)
