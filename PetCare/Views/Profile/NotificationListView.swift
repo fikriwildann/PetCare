@@ -24,11 +24,6 @@ struct NotificationListView: View {
                     Text("Notifikasi")
                         .font(PCFont.headline()).foregroundStyle(Color.pcText1)
                     Spacer()
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Color.pcText3)
-                    }
                 }
                 .padding(.horizontal, PCSpace.lg)
                 .padding(.vertical, PCSpace.sm)

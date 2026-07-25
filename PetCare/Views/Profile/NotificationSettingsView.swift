@@ -7,9 +7,9 @@ import UserNotifications
 struct NotificationSettingsView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var vm: AppViewModel
-    @State private var vaccineNotif = true
-    @State private var feedingNotif = true
-    @State private var medicationNotif = true
+    @State private var vaccineNotif = NotificationService.shared.getVaccineNotif()
+    @State private var feedingNotif = NotificationService.shared.getFeedingNotif()
+    @State private var medicationNotif = NotificationService.shared.getMedicationNotif()
     @State private var permissionGranted = false
     @State private var showPermissionAlert = false
 
@@ -61,10 +61,40 @@ struct NotificationSettingsView: View {
                                 .padding(.horizontal, PCSpace.lg)
                             VStack(spacing: 0) {
                                 notifToggleRow(emoji: "💉", title: "Vaksin", color: .pcOrange, isOn: $vaccineNotif)
+                                    .onChange(of: vaccineNotif) { _, newValue in
+                                        NotificationService.shared.setVaccineNotif(enabled: newValue)
+                                        if !newValue {
+                                            NotificationService.shared.cancelAllVaccineReminders(for: vm.vaccines)
+                                        } else {
+                                            NotificationService.shared.rescheduleVaccineReminders(
+                                                vaccines: vm.vaccines, pets: vm.pets
+                                            )
+                                        }
+                                    }
                                 Divider().padding(.leading, 58)
                                 notifToggleRow(emoji: "🍖", title: "Jadwal Makan", color: .pcGreen, isOn: $feedingNotif)
+                                    .onChange(of: feedingNotif) { _, newValue in
+                                        NotificationService.shared.setFeedingNotif(enabled: newValue)
+                                        if !newValue {
+                                            NotificationService.shared.cancelAllFeedingReminders(for: vm.feedings)
+                                        } else {
+                                            NotificationService.shared.rescheduleFeedingReminders(
+                                                feedings: vm.feedings, pets: vm.pets
+                                            )
+                                        }
+                                    }
                                 Divider().padding(.leading, 58)
                                 notifToggleRow(emoji: "💊", title: "Obat", color: .pcPurple, isOn: $medicationNotif)
+                                    .onChange(of: medicationNotif) { _, newValue in
+                                        NotificationService.shared.setMedicationNotif(enabled: newValue)
+                                        if !newValue {
+                                            NotificationService.shared.cancelAllMedicationReminders(for: vm.medications)
+                                        } else {
+                                            NotificationService.shared.rescheduleMedicationReminders(
+                                                medications: vm.medications, pets: vm.pets
+                                            )
+                                        }
+                                    }
                             }
                             .padding(PCSpace.md)
                             .elevatedGlass(radius: PCRadius.xl)

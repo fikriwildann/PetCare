@@ -8,6 +8,38 @@ final class NotificationService {
     static let shared = NotificationService()
     private init() {}
 
+    // MARK: - UserDefaults Keys
+    private enum PrefsKey {
+        static let vaccineNotif = "notif_vaccine_enabled"
+        static let feedingNotif = "notif_feeding_enabled"
+        static let medicationNotif = "notif_medication_enabled"
+    }
+
+    // MARK: - Default preferences (all on)
+    private var vaccineEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: PrefsKey.vaccineNotif) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: PrefsKey.vaccineNotif) }
+    }
+
+    private var feedingEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: PrefsKey.feedingNotif) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: PrefsKey.feedingNotif) }
+    }
+
+    private var medicationEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: PrefsKey.medicationNotif) as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: PrefsKey.medicationNotif) }
+    }
+
+    // Called by NotificationSettingsView when toggles change
+    func setVaccineNotif(enabled: Bool) { vaccineEnabled = enabled }
+    func setFeedingNotif(enabled: Bool) { feedingEnabled = enabled }
+    func setMedicationNotif(enabled: Bool) { medicationEnabled = enabled }
+
+    func getVaccineNotif() -> Bool { vaccineEnabled }
+    func getFeedingNotif() -> Bool { feedingEnabled }
+    func getMedicationNotif() -> Bool { medicationEnabled }
+
     // MARK: - Permission
     func requestPermission() async -> Bool {
         let center = UNUserNotificationCenter.current()
@@ -21,6 +53,7 @@ final class NotificationService {
 
     // MARK: - Schedule Vaccine Reminder
     func scheduleVaccineReminder(for vaccine: Vaccine, petName: String) {
+        guard vaccineEnabled else { return }
         guard let nextDate = vaccine.nextDate else { return }
 
         // Cancel existing vaccine notifications first
@@ -52,6 +85,7 @@ final class NotificationService {
 
     // MARK: - Schedule Feeding Reminder
     func scheduleFeedingReminder(for feeding: FeedingSchedule, petName: String) {
+        guard feedingEnabled else { return }
         // Cancel existing notification first to avoid duplicates
         cancelReminder(id: "feeding-\(feeding.id)")
 
@@ -83,6 +117,7 @@ final class NotificationService {
 
     // MARK: - Schedule Medication Reminder
     func scheduleMedicationReminder(for med: Medication, petName: String) {
+        guard medicationEnabled else { return }
         // Skip if medication is not active
         guard med.isActive else { return }
 
@@ -119,7 +154,27 @@ final class NotificationService {
         }
     }
 
-    // MARK: - Cancel
+    // MARK: - Cancel per type (receive arrays as params — NotificationService has no internal state)
+    func cancelAllVaccineReminders(for vaccines: [Vaccine]) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: vaccines.flatMap { ["vaccine-\($0.id)", "vaccine-day-\($0.id)"] }
+        )
+    }
+
+    func cancelAllFeedingReminders(for feedings: [FeedingSchedule]) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: feedings.map { "feeding-\($0.id)" }
+        )
+    }
+
+    func cancelAllMedicationReminders(for medications: [Medication]) {
+        let ids = medications.flatMap { med in
+            (0..<med.scheduleTimes.count).map { "med-\(med.id)-\($0)" }
+        }
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
+    // MARK: - Cancel single / legacy (still used by AppViewModel update/delete)
     func cancelReminder(id: String) {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [id])
     }
@@ -137,6 +192,28 @@ final class NotificationService {
 
     func cancelAllReminders() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+    }
+
+    // MARK: - Reschedule per type (for toggle re-enable)
+    func rescheduleVaccineReminders(vaccines: [Vaccine], pets: [Pet]) {
+        let petNames = Dictionary(uniqueKeysWithValues: pets.map { ($0.id, $0.name) })
+        for v in vaccines {
+            scheduleVaccineReminder(for: v, petName: petNames[v.petId] ?? "Hewan")
+        }
+    }
+
+    func rescheduleFeedingReminders(feedings: [FeedingSchedule], pets: [Pet]) {
+        let petNames = Dictionary(uniqueKeysWithValues: pets.map { ($0.id, $0.name) })
+        for f in feedings {
+            scheduleFeedingReminder(for: f, petName: petNames[f.petId] ?? "Hewan")
+        }
+    }
+
+    func rescheduleMedicationReminders(medications: [Medication], pets: [Pet]) {
+        let petNames = Dictionary(uniqueKeysWithValues: pets.map { ($0.id, $0.name) })
+        for m in medications {
+            scheduleMedicationReminder(for: m, petName: petNames[m.petId] ?? "Hewan")
+        }
     }
 
     // MARK: - Reschedule All (for app launch)

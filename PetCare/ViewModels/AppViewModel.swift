@@ -377,10 +377,18 @@ final class AppViewModel: ObservableObject {
 
     func logout() {
         do {
+            // Cancel all pending local notifications before signing out
+            NotificationService.shared.cancelAllReminders()
             try Auth.auth().signOut()
             withAnimation(.pcSpring) { isLoggedIn = false }
             notifications = []
             currentUser = SampleData.user
+            pets = []
+            feedings = []
+            vaccines = []
+            medications = []
+            healthRecords = []
+            weightRecords = []
         } catch {
             authError = error.localizedDescription
         }
